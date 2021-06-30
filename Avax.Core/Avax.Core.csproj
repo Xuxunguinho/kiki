@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Avax.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="obj\Debug\netstandard2.0\AvaliatorX.Core.AssemblyInfo.cs" />
+    <Compile Include="obj\Debug\TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs" />
+    <Compile Include="obj\Debug\TemporaryGeneratedFile_5937a670-0e60-4077-877b-f7221da3dda1.cs" />
+    <Compile Include="obj\Debug\TemporaryGeneratedFile_E7A71F73-0F8D-4B9B-B56E-8E70B10BC5D3.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="obj\Debug\LogicTestConselhoNotas.csproj.FileListAbsolute.txt" />
+    <Content Include="obj\Debug\netstandard2.0\AvaliatorX.Core.csproj.FileListAbsolute.txt" />
+    <Content Include="obj\Debug\Sape.Avaliador.Core.csproj.FileListAbsolute.txt" />
+    <Content Include="obj\project.assets.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="obj\AvaliatorX.Core.csproj.nuget.cache" />
+    <None Include="obj\AvaliatorX.Core.csproj.nuget.g.props" />
+    <None Include="obj\AvaliatorX.Core.csproj.nuget.g.targets" />
+    <None Include="obj\Debug\DesignTimeResolveAssemblyReferencesInput.cache" />
+    <None Include="obj\Debug\LogicTestConselhoNotas.csproj.CopyComplete" />
+    <None Include="obj\Debug\LogicTestConselhoNotas.csproj.CoreCompileInputs.cache" />
+    <None Include="obj\Debug\LogicTestConselhoNotas.csproj.LogicTestConselhoNotas.exe.config" />
+    <None Include="obj\Debug\LogicTestConselhoNotas.csprojResolveAssemblyReference.cache" />
+    <None Include="obj\Debug\LogicTestConselhoNotas.exe" />
+    <None Include="obj\Debug\netstandard2.0\AvaliatorX.Core.AssemblyInfoInputs.cache" />
+    <None Include="obj\Debug\netstandard2.0\AvaliatorX.Core.assets.cache" />
+    <None Include="obj\Debug\netstandard2.0\AvaliatorX.Core.csproj.CoreCompileInputs.cache" />
+    <None Include="obj\Debug\netstandard2.0\AvaliatorX.Core.csprojResolveAssemblyReference.cache" />
+    <None Include="obj\Debug\netstandard2.0\AvaliatorX.Core.dll" />
+    <None Include="obj\Debug\netstandard2.0\AvaliatorX.Core.pdb" />
+    <None Include="obj\Debug\Sape.Avaliador.Core.csproj.CopyComplete" />
+    <None Include="obj\Debug\Sape.Avaliador.Core.csproj.CoreCompileInputs.cache" />
+    <None Include="obj\Debug\Sape.Avaliador.Core.csprojResolveAssemblyReference.cache" />
+    <None Include="obj\Debug\Sape.Avaliador.Core.dll" />
+    <None Include="obj\Debug\Sape.Avaliador.Core.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="obj\Debug\TempPE\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Lex\Lex\Lex.csproj" />
+    <ProjectReference Include="..\..\lizzie\lizzie\lizzie.csproj" />
+    <ProjectReference Include="..\..\NoSqliteX\NoSqliteX\NoSqliteX.csproj" />
+  </ItemGroup>
+
+</Project>
