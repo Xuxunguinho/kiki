@@ -1,4 +1,5 @@
 ﻿using System;
+using NoSqliteX;
 
 namespace Avax.Core.NoSQLData.Examples
 {

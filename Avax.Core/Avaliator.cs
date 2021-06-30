@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using Avax.Core.NoSQLData.Examples;
 using Lex;
+
 namespace Avax.Core
 {
     public class Avaliator<T>
@@ -198,8 +199,7 @@ namespace Avax.Core
                 Id = 6,
                 Nome = "Rosa Reis",
                 Disciplina = new Disciplina {Id = 5, Nota = 10, Nome = "BIOLOGIA"},
-            }
-            ,
+            },
 
             new PautaFinal
             {
@@ -230,8 +230,7 @@ namespace Avax.Core
                 Id = 7,
                 Nome = "Serafim Guialo",
                 Disciplina = new Disciplina {Id = 5, Nota = 10, Nome = "BIOLOGIA"},
-            }
-            ,
+            },
 
             new PautaFinal
             {
@@ -262,8 +261,7 @@ namespace Avax.Core
                 Id = 8,
                 Nome = "Nkawa Mayombo",
                 Disciplina = new Disciplina {Id = 5, Nota = 10, Nome = "BIOLOGIA"},
-            }
-            ,
+            },
 
             new PautaFinal
             {
@@ -326,7 +324,7 @@ namespace Avax.Core
                 Nome = "Alfa Guialo",
                 Disciplina = new Disciplina {Id = 5, Nota = 10, Nome = "BIOLOGIA"},
             },
-            
+
 
             new PautaFinal
             {
@@ -360,37 +358,17 @@ namespace Avax.Core
             },
         };
 
-        private readonly Dictionary<string, Func<double, bool>> Cln = new Dictionary<string, Func<double, bool>>
-        {
-            {
-                "negativa",
-                (nota => nota < 8)
-            },
-
-            {
-                "deficiencia",
-                (nota => nota >= 8 && nota < 10)
-            },
-            {
-                "positiva",
-                (nota => nota >= 10)
-            }
-        };
-        private readonly Dictionary<string, object> _mapaTipoNota;
+        private readonly Dictionary<string, object> _mapaClassesNota;
         private readonly string _script;
-        public Avaliator(string script, Dictionary<string, object> mapaTipoNota)
+
+        public Avaliator(string script, Dictionary<string, object> mapaClassesNota)
         {
-            _mapaTipoNota = mapaTipoNota;
+            _mapaClassesNota = mapaClassesNota;
             _script = script;
         }
 
         private static Func<IEnumerable<string>, object, double> Nota => (nota, x) => nota.GetValue(x).ToDouble();
         private static Func<IEnumerable<string>, object, string> Nome => (nota, x) => nota.GetValue(x).ToString();
-
-        private void BuildObs(StringBuilder stb)
-        {
-           
-        }
 
         public bool Avaliar(IEnumerable<T> source, Expression<Func<T, object>> pKeyDistinct, Func<T, T,
                 bool> pKeyAll, Expression<Func<T, object>> notaKey,
@@ -400,22 +378,20 @@ namespace Avax.Core
         {
             try
             {
-                var stopw = new Stopwatch();
-                stopw.Start();
-                var negativasInc = new List<object> { 1, 2, 4 };
-                var deficienciasInc = new List<object> { 1, 2 };
-                var obs = new StringBuilder();
+#if DEBUG
 
-
+                var stow = new Stopwatch();
+                stow.Start();
+#endif
                 // expressions
 
-                var exprnota = notaKey.DeserializeExpression();
+                var exprNota = notaKey.DeserializeExpression();
                 var exprNome = nomeKey.DeserializeExpression();
                 var exprResult = resultKey.DeserializeExpression();
                 var exprObs = obsKey.DeserializeExpression();
                 var exprDiscName = discNameKey.DeserializeExpression();
                 var exprDiscPk = discPkKey.DeserializeExpression();
-
+                
                 // binding
                 var helper = new ScriptHelper<T>();
                 helper.AddBind("idDisciplina", exprDiscPk);
@@ -423,46 +399,31 @@ namespace Avax.Core
                 helper.AddBind("nomeDisciplina", exprDiscName);
                 helper.AddBind("discName", exprDiscName);
 
-                helper.SetBindedValue("$nota", exprnota);
-                helper.SetBindedValue("$result", exprResult);
-                helper.SetBindedValue("$obs", exprObs);
-                helper.SetBindedValue("$pkAll", pKeyAll);
+                helper.SetValueForBind("$nota", exprNota);
+                helper.SetValueForBind("$result", exprResult);
+                helper.SetValueForBind("$obs", exprObs);
+                helper.SetValueForBind("$pkAll", pKeyAll);
 
                 var enumerable = source as T[] ?? source.ToArray();
-
-
 
                 foreach (var s in enumerable.Distinct(pKeyDistinct))
                 {
                     var av = enumerable.Where(x => pKeyAll(x, s))?.ToArray();
 
-                    helper.SetBindedValue("$aluno", s);
-                    helper.SetBindedValue("notasAluno", av);
+                    helper.SetValueForBind("$aluno", s);
+                    helper.SetValueForBind("notasAluno", av);
 
-                    helper.BindTipoNotas(_mapaTipoNota, av, exprnota);
-                    //var code = helper.BindResultados(_script);
+                    helper.ClasseNotasBinder(_mapaClassesNota, av, exprNota);
 
                     helper.Run(_script);
-                    //if ((negativas.Length == 0
-                    //     && deficiencias.Length <= 1 &&
-                    //     (deficiencias.Count(x => deficienciasInc.Contains(x.GetDynValue(exprDiscPk)))
-                    //      == 0)))
-
-                    //    doForStudent(s,av,"Aprovado");
-
-                    //else if (negativas.Length == 0
-                    //         && deficiencias.Length >= 1 &&
-                    //         deficiencias.Length <= 3 &&
-                    //         deficiencias.Count(x => deficienciasInc.Contains(x.GetDynValue(exprDiscPk))) == 0)
-                    //    doForStudent(s,av,"Recurso");
-
-                    //else
-                    //    doForStudent(s,av,"Reprovado");
                 }
+#if DEBUG
 
-                stopw.Stop();
+
+                stow.Stop();
                 message =
-                    $"O resultados foram apresentados em -> {new TimeSpan(stopw.ElapsedMilliseconds).Milliseconds}";
+                    $"The results were presented in -> {new TimeSpan(stow.ElapsedMilliseconds).Milliseconds}";
+#endif
                 return true;
             }
             catch (Exception e)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NoSqliteX;
 
 namespace Avax.Core.NoSQLData.Objects
 {

@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters;
 using Avax.Core.NoSQLData;
 using Avax.Core.NoSQLData.BussinesLayer;
-
+using NoSqliteX;
 namespace Avax.Core
 {
     public static class Starter
@@ -45,11 +45,11 @@ namespace Avax.Core
         {
             try
             {
-                var cod = new Sape.Data.Core.ApiSettings().Init("##443$KJRJKRKSDSLKDL",
-                    conectionString);
-                return cod;
+               // var cod = new Sape.Data.Core.ApiSettings().Init("##443$KJRJKRKSDSLKDL",
+                   // conectionString);
+                return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
