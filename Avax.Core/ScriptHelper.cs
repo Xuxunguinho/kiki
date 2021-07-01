@@ -16,7 +16,7 @@ namespace Avax.Core
     internal class ScriptHelper<T>
     {
         private static Func<IEnumerable<string>, object, double> Nota => (nota, x) => x.GetDynValue(nota).ToDouble();
-        private static readonly Func<object, string> _map = (obj) => $"map({obj})";
+        private static readonly Func<object, string> MaperFunc = (obj) => $"map({obj})";
         private static readonly Regex MapRegex = new Regex("map\\(('[^>]+',[a-zA-Z0-9]+)\\)");
         private readonly Binder<ScriptHelper<T>> _masterBinder;
 
@@ -55,7 +55,7 @@ namespace Avax.Core
                     i++;
                 }
 
-                return _map(str);
+                return MaperFunc(str);
             }
             catch (Exception e)
             {
@@ -169,13 +169,21 @@ namespace Avax.Core
 
             return str;
         }
+
         public bool Start()
         {
             return true;
         }
 
-        #region Lizzie Extensions
+        #region extending Lizzie
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="LizzieException"></exception>
         [Bind(Name = "=>")]
         private object Contains(Binder<ScriptHelper<T>> binder, Arguments args)
         {
@@ -183,50 +191,101 @@ namespace Avax.Core
                 throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
             var list = args.Get(0);
             var equate = args.Get(1) as IEnumerable<object>;
-            ;
+
+            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+            for (var i = 0; i < objects.Count(); i++)
+                if (i < objects.Count() - 1)
+                    if (objects[i].GetType() != objects[i + 1].GetType())
+                        throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
+
             var field = args.Get(2) as string[];
             if (!(list is IEnumerable<T> source)) return false;
             var enumerable = source as T[] ?? source.ToArray();
             if (enumerable.IsNullOrEmpty()) return false;
-            if (equate is null) return false;
-            var count = enumerable.Count(x => equate.Contains(field.GetValue(x)));
-            return count > 0;
+            return !(equate is null) && equate.Any(x => enumerable.Count(z => z.GetDynValue(field).Compare(x)) > 0);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="LizzieException"></exception>
+        [Bind(Name = "!=>")]
+        private object NotContains(Binder<ScriptHelper<T>> binder, Arguments args)
+        {
+            if (args.Count != 3)
+                throw new LizzieException("O método não pode conter mais nem menos do que 2 argumentos");
+
+            var list = args.Get(0);
+            var equate = args.Get(1) as IEnumerable<object>;
+            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+           
+            for (var i = 0; i < objects.Count(); i++)
+                if (i < objects.Count() - 1)
+                    if (objects[i].GetType() != objects[i + 1].GetType())
+                        throw new LizzieException("Os paramentros da lista de compração devem ser do mesmo tipo");
+
+            var field = args.Get(2) as string[];
+            var teg = default(T);
+            if(objects[0].GetType() != teg.GetFieldType(field))
+                     throw new Exception("o campo de referência da função { !=>(conjunto,comparacao,referencia) } deve ser do memo tipo que itens do conjunto de comparação");
+             
+
+            if (!(list is IEnumerable<T> source)) return true;
+            var enumerable = source as T[] ?? source.ToArray();
+            if (enumerable.IsNullOrEmpty()) return true;
+           
+            if (equate is null) 
+                throw new LizzieException("A lista de comparadores não pode ser nula");
+            
+            var listR = equate.Select(x => enumerable.Count(z => z.GetDynValue(field).Compare(x)) == 0).ToList();
+
+            return (listR.Contains(true) && !listR.Contains(false)) || (!listR.Contains(true) && listR.Contains(false));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         [Bind(Name = "$R->")]
         private object Result(Binder<ScriptHelper<T>> binder, Arguments args)
         {
             if (args.Count > 1 || args.Count < 1)
                 throw new Exception("Esta funcao nao pode ter mais nem menos do que 1 argumento");
-            if (!(args.Get(0) is string resultado))
+            if (!(args.Get(0) is string result))
                 throw new Exception("o argumento tem de ser uma string");
 
             var av = binder["notasAluno"] as T[];
             var storedData = binder["result_map"] as Dictionary<string, List<T>>;
-            var aluno = av.FirstOrDefault();
-
+            var aluno = (av ?? Array.Empty<T>()).FirstOrDefault();
             var nota = binder["$nota"] as string[];
-            var discname = binder["discName"] as string[];
+            var discName = binder["discName"] as string[];
             var exprObs = binder["$obs"] as string[];
             var exprResult = binder["$result"] as string[];
             var pkeyAll = binder["$pkAll"] as Func<T, T, bool>;
             var obs = new StringBuilder();
             obs.Clear();
             obs.AppendLine();
-            obs.AppendLine($"    Resultado -> {resultado}");
-            foreach (var key in storedData.Keys)
-            {
-                var coletion = storedData[key];
-                var colet = DiscShow(coletion, nota, discname);
-                obs.AppendLine($"    {key} -> {coletion.Count} {colet}");
-            }
+            obs.AppendLine($"    Resultado -> {result}");
+            if (storedData != null)
+                foreach (var key in storedData.Keys)
+                {
+                    var collection = storedData[key];
+                    var colet = DiscShow(collection, nota, discName);
+                    obs.AppendLine($"    {key} -> {collection.Count} {colet}");
+                }
 
             obs.AppendLine();
             av.Update(p =>
             {
                 p.SetDynValue(obs.ToString(), exprObs);
-                p.SetDynValue(resultado, exprResult);
-            }, n => pkeyAll(n, aluno));
+                p.SetDynValue(result, exprResult);
+            }, n => pkeyAll != null && pkeyAll(n, aluno));
 
             return null;
         }
@@ -240,37 +299,40 @@ namespace Avax.Core
             return $"[ {str} ]";
         }
 
-        [Bind(Name = "!=>")]
-        private object NotContains(Binder<ScriptHelper<T>> binder, Arguments args)
-        {
-            if (args.Count != 3)
-                throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
-
-            var list = args.Get(0);
-            var equater = args.Get(1) as IEnumerable<object>;
-            var objects = equater as object[] ?? equater.ToArray();
-            for (var i = 0; i < objects.Count(); i++)
-                if (i < objects.Count() - 1)
-                    if (objects[i].GetType() != objects[i + 1].GetType())
-                        throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
-
-            var field = args.Get(2) as string[];
-            if (!(list is IEnumerable<T> source)) return true;
-            var enumerable = source as T[] ?? source.ToArray();
-            if (enumerable.IsNullOrEmpty()) return true;
-            if (equater is null) return true;
-            var count = enumerable.Count(x => objects.Contains(field.GetValue(x)));
-            return count <= 0;
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="LizzieException"></exception>
         [Bind(Name = "&")]
         private object And(Binder<ScriptHelper<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
-            return args.Aggregate(true, (current, x) => current && (bool) x);
+
+            var equate = args as IEnumerable<object>;
+            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+            //
+            for (var i = 0; i < objects.Count(); i++)
+                if (i < objects.Count() - 1)
+                    if (objects[i].GetType() != objects[i + 1].GetType())
+                        throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
+
+            return (args.Contains(true) && !args.Contains(false)) || (!args.Contains(true) && args.Contains(false));
+
+            /*var xr = args.Aggregate(true, (current, x) => current && (bool) x);
+            return xr;*/
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="binder"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="LizzieException"></exception>
         [Bind(Name = "ou")]
         private object Or(Binder<ScriptHelper<T>> binder, Arguments args)
         {
