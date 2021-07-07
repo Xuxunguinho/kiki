@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using lizzie;
 using lizzie.exceptions;
 using Lex;
+using static Lex.Lex;
 
 namespace Avax.Core
 {
@@ -13,26 +14,31 @@ namespace Avax.Core
     /// implementing Lizzie for application
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class ScriptHelper<T>
+    internal class ScriptCore<T>
     {
         private static Func<IEnumerable<string>, object, double> Nota => (nota, x) => x.GetDynValue(nota).ToDouble();
         private static readonly Func<object, string> MaperFunc = (obj) => $"map({obj})";
         private static readonly Regex MapRegex = new Regex("map\\(('[^>]+',[a-zA-Z0-9]+)\\)");
-        private readonly Binder<ScriptHelper<T>> _masterBinder;
+        private readonly Binder<ScriptCore<T>> _masterBinder;
 
         /// <summary>
         ///  class builder
         /// </summary>
-        public ScriptHelper()
+        public ScriptCore()
         {
-            _masterBinder = new Binder<ScriptHelper<T>>();
+           
+            _masterBinder = new Binder<ScriptCore<T>>();
             LambdaCompiler.BindFunctions(_masterBinder);
+            
             AddBind("$nota", new string[] { });
             AddBind("$result", new string[] { });
             AddBind("$obs", new string[] { });
-            var aValue = default(T);
-            AddBind("$aluno", aValue);
-            AddBind("notasAluno", new T[] { });
+            var aValue = CreateInstance<T>();
+            
+     
+            
+            AddBind("$ctxI", aValue);
+            AddBind("$ctxC", new T[] { });
             AddBind("$pkAll", (Func<T, T, bool>) null);
         }
 
@@ -79,7 +85,7 @@ namespace Avax.Core
                     throw new Exception("o codigo naão se encontra no formato corecto");
                 }
 
-                var executeMapa = LambdaCompiler.Compile<ScriptHelper<T>>(new ScriptHelper<T>(), _masterBinder, code);
+                var executeMapa = LambdaCompiler.Compile<ScriptCore<T>>(new ScriptCore<T>(), _masterBinder, code);
                 var result = executeMapa() as Dictionary<string, object>;
                 return result;
             }
@@ -115,7 +121,7 @@ namespace Avax.Core
         /// <returns></returns>
         public object Run(string code)
         {
-            var lambda = LambdaCompiler.Compile<ScriptHelper<T>>(new ScriptHelper<T>(), _masterBinder, code);
+            var lambda = LambdaCompiler.Compile<ScriptCore<T>>(new ScriptCore<T>(), _masterBinder, code);
             return lambda();
         }
 
@@ -126,25 +132,28 @@ namespace Avax.Core
         /// <param name="av">set to be evaluated</param>
         /// <param name="field">field to be evaluated</param>
         /// <returns></returns>
-        public Dictionary<string, List<T>> ClasseNotasBinder(Dictionary<string, object> map, T[] av,
+        public void ClasseNotasBinder(Dictionary<string, object> map, T[] av,
             IEnumerable<string> field)
         {
             var dictionary = new Dictionary<string, List<T>>();
-            if (map?.Keys == null) return new Dictionary<string, List<T>>();
+            if (map?.Keys == null)
+            {
+                return;
+            }
+
             foreach (var key in map?.Keys)
             {
                 var symbolName = key + "s";
                 var expr = map[key].ToString().SupressSpace();
-                var exec = Run(expr) as Function<ScriptHelper<T>>;
+                var exec = Run(expr) as Function<ScriptCore<T>>;
                 var data = av.Where(x =>
                         exec != null && (bool) exec(this, _masterBinder, new Arguments {Nota(field, x)}))
-                    ?.ToList();
+                    ?.ToList()  ?? new List<T>();
                 _masterBinder[symbolName] = data;
                 dictionary.Add(symbolName, data);
             }
 
             AddBind("result_map", dictionary);
-            return dictionary;
         }
 
         /// <summary>
@@ -185,7 +194,7 @@ namespace Avax.Core
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "=>")]
-        private object Contains(Binder<ScriptHelper<T>> binder, Arguments args)
+        private object Contains(Binder<ScriptCore<T>> binder, Arguments args)
         {
             if (args.Count != 3)
                 throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
@@ -199,6 +208,20 @@ namespace Avax.Core
                         throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
 
             var field = args.Get(2) as string[];
+            var teg = CreateInstance<T>();
+            var t1 = objects?.FirstOrDefault()?.GetType();
+            var t2 = GetFieldType<T>(field);
+
+
+            if (t1 != t2)
+                if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
+                    if (!(t1 is null) && !(t1.ToString() == "System.Int64" &&
+                                           (t2.ToString() == "System.Double" || t2.ToString() == "System.Float")))
+                        throw new Exception($"o campo de referência da " +
+                                            "função !=>(conjunto,comparacao,referencia) " +
+                                            "deve ser do memo tipo que os itens do conjunto de comparação");
+
+
             if (!(list is IEnumerable<T> source)) return false;
             var enumerable = source as T[] ?? source.ToArray();
             if (enumerable.IsNullOrEmpty()) return false;
@@ -213,34 +236,50 @@ namespace Avax.Core
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "!=>")]
-        private object NotContains(Binder<ScriptHelper<T>> binder, Arguments args)
+        private object NotContains(Binder<ScriptCore<T>> binder, Arguments args)
         {
             if (args.Count != 3)
-                throw new LizzieException("O método não pode conter mais nem menos do que 2 argumentos");
+                throw new LizzieException
+                ("O método não pode "
+                 + "conter mais nem menos"
+                 + " do que 2 argumentos");
 
             var list = args.Get(0);
             var equate = args.Get(1) as IEnumerable<object>;
             var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
-           
+            if (objects.IsNullOrEmpty()) return true;
+            var field = args.Get(2) as string[];
+
             for (var i = 0; i < objects.Count(); i++)
                 if (i < objects.Count() - 1)
                     if (objects[i].GetType() != objects[i + 1].GetType())
-                        throw new LizzieException("Os paramentros da lista de compração devem ser do mesmo tipo");
-
-            var field = args.Get(2) as string[];
-            var teg = default(T);
-            if(objects[0].GetType() != teg.GetFieldType(field))
-                     throw new Exception("o campo de referência da função { !=>(conjunto,comparacao,referencia) } deve ser do memo tipo que itens do conjunto de comparação");
-             
+                        throw new LizzieException("Os paramentros da lista " +
+                                                  "de compração devem ser" +
+                                                  " do mesmo tipo");
 
             if (!(list is IEnumerable<T> source)) return true;
+            if (equate is null)
+                throw new LizzieException("A lista de " +
+                                          "comparadores não pode ser nula");
+
             var enumerable = source as T[] ?? source.ToArray();
             if (enumerable.IsNullOrEmpty()) return true;
            
-            if (equate is null) 
-                throw new LizzieException("A lista de comparadores não pode ser nula");
-            
-            var listR = equate.Select(x => enumerable.Count(z => z.GetDynValue(field).Compare(x)) == 0).ToList();
+            var teg = CreateInstance<T>();
+            var t1 = objects?.FirstOrDefault()?.GetType();
+            var t2 =  GetFieldType<T>(field);
+
+
+            if (t1 != t2)
+                if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
+                    if (!(t1 is null) && !(t1.ToString() == "System.Int64" &&
+                                           (t2.ToString() == "System.Double" || t2.ToString() == "System.Float")))
+                        throw new Exception($"o campo de referência da " +
+                                            "função !=>(conjunto,comparacao,referencia) " +
+                                            "deve ser do memo tipo que os itens do conjunto de comparação");
+
+
+            var listR = equate?.Select(x => enumerable?.Count(z => z.GetDynValue(field).Compare(x)) == 0)?.ToList() ?? new List<bool>();
 
             return (listR.Contains(true) && !listR.Contains(false)) || (!listR.Contains(true) && listR.Contains(false));
         }
@@ -253,44 +292,54 @@ namespace Avax.Core
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         [Bind(Name = "$R->")]
-        private object Result(Binder<ScriptHelper<T>> binder, Arguments args)
+        private object Result(Binder<ScriptCore<T>> binder, Arguments args)
         {
-            if (args.Count > 1 || args.Count < 1)
-                throw new Exception("Esta funcao nao pode ter mais nem menos do que 1 argumento");
-            if (!(args.Get(0) is string result))
-                throw new Exception("o argumento tem de ser uma string");
-
-            var av = binder["notasAluno"] as T[];
-            var storedData = binder["result_map"] as Dictionary<string, List<T>>;
-            var aluno = (av ?? Array.Empty<T>()).FirstOrDefault();
-            var nota = binder["$nota"] as string[];
-            var discName = binder["discName"] as string[];
-            var exprObs = binder["$obs"] as string[];
-            var exprResult = binder["$result"] as string[];
-            var pkeyAll = binder["$pkAll"] as Func<T, T, bool>;
-            var obs = new StringBuilder();
-            obs.Clear();
-            obs.AppendLine();
-            obs.AppendLine($"    Resultado -> {result}");
-            if (storedData != null)
-                foreach (var key in storedData.Keys)
-                {
-                    var collection = storedData[key];
-                    var colet = DiscShow(collection, nota, discName);
-                    obs.AppendLine($"    {key} -> {collection.Count} {colet}");
-                }
-
-            obs.AppendLine();
-            av.Update(p =>
+            try
             {
-                p.SetDynValue(obs.ToString(), exprObs);
-                p.SetDynValue(result, exprResult);
-            }, n => pkeyAll != null && pkeyAll(n, aluno));
+                if (args.Count > 1 || args.Count < 1)
+                    throw new Exception("Esta funcao nao pode ter mais nem menos do que 1 argumento");
+                if (!(args.Get(0) is string result))
+                    throw new Exception("o argumento tem de ser uma string");
 
-            return null;
+                var contextCollection = binder["$ctxC"] as T[];
+                var storedData = binder["result_map"] as Dictionary<string, List<T>>;
+                var contextItem = (contextCollection ?? Array.Empty<T>()).FirstOrDefault();
+                if (contextItem == null)
+                    throw new Exception("o item de contexto nao pode ser nulo");
+            
+                var nota = binder["$nota"] as string[];
+                var discName = binder["discName"] as string[];
+                var exprObs = binder["$obs"] as string[];
+                var exprResult = binder["$result"] as string[];
+                var pkeyAll = binder["$pkAll"] as Func<T, T, bool>;
+                var obs = new StringBuilder();
+                obs.Clear();
+                obs.AppendLine();
+                obs.AppendLine($"    Resultado -> {result}");
+                if (storedData != null)
+                    foreach (var key in storedData.Keys)
+                    {
+                        var collection = storedData[key];
+                        var colet = StrBuilder(collection, nota, discName);
+                        obs.AppendLine($"    {key} -> {collection.Count} {colet}");
+                    }
+
+                obs.AppendLine();
+                contextCollection.Update(p =>
+                {
+                    p.SetDynValue(obs.ToString(), exprObs);
+                    p.SetDynValue(result, exprResult);
+                }, n => pkeyAll != null && pkeyAll(n, contextItem));
+
+                return null;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
-        private static string DiscShow(IEnumerable<T> pauta, IEnumerable<string> notaKey,
+        private static string StrBuilder(IEnumerable<T> pauta, IEnumerable<string> notaKey,
             IEnumerable<string> dicNameKeys)
         {
             var str = pauta.Aggregate(string.Empty,
@@ -307,7 +356,7 @@ namespace Avax.Core
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "&")]
-        private object And(Binder<ScriptHelper<T>> binder, Arguments args)
+        private object And(Binder<ScriptCore<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
@@ -322,8 +371,6 @@ namespace Avax.Core
 
             return (args.Contains(true) && !args.Contains(false)) || (!args.Contains(true) && args.Contains(false));
 
-            /*var xr = args.Aggregate(true, (current, x) => current && (bool) x);
-            return xr;*/
         }
 
         /// <summary>
@@ -334,7 +381,7 @@ namespace Avax.Core
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "ou")]
-        private object Or(Binder<ScriptHelper<T>> binder, Arguments args)
+        private object Or(Binder<ScriptCore<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");

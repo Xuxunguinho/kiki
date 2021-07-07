@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Avax.Core</RootNamespace>
+    <Company>https://github.com/Xuxunguinho</Company>
+    <AssemblyVersion>0.1.1</AssemblyVersion>
+    <FileVersion>0.1.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +15,10 @@
     <Compile Include="obj\Debug\TemporaryGeneratedFile_E7A71F73-0F8D-4B9B-B56E-8E70B10BC5D3.cs" />
     <Compile Remove="Aluno.cs" />
     <Compile Remove="obj\**" />
+    <Compile Remove="NoSQLData\NoSqliteXTables\**" />
+    <Compile Remove="SQLData\**" />
+    <Compile Remove="NoSQLData\Objects\**" />
+    <Compile Remove="Interfaces\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +50,10 @@
     <None Include="obj\Debug\Sape.Avaliador.Core.dll" />
     <None Include="obj\Debug\Sape.Avaliador.Core.pdb" />
     <None Remove="obj\**" />
+    <None Remove="NoSQLData\NoSqliteXTables\**" />
+    <None Remove="SQLData\**" />
+    <None Remove="NoSQLData\Objects\**" />
+    <None Remove="Interfaces\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,9 +62,14 @@
 
   <ItemGroup>
     <EmbeddedResource Remove="obj\**" />
+    <EmbeddedResource Remove="NoSQLData\NoSqliteXTables\**" />
+    <EmbeddedResource Remove="SQLData\**" />
+    <EmbeddedResource Remove="NoSQLData\Objects\**" />
+    <EmbeddedResource Remove="Interfaces\**" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Lex\Lex\Lex.csproj" />
     <ProjectReference Include="..\..\lizzie\lizzie\lizzie.csproj" />
     <ProjectReference Include="..\..\NoSqliteX\NoSqliteX\NoSqliteX.csproj" />
   </ItemGroup>

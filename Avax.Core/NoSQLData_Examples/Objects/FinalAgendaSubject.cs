@@ -1,15 +1,15 @@
 ﻿using System;
 using System.ComponentModel;
 
-namespace Avax.Core.NoSQLData.Examples
+namespace Avax.Core.NoSQLData_Examples.Objects
 {
     [Serializable]
-    public class Disciplina
+    public class FinalAgendaSubject
     {
         [ReadOnly(true)]
         public int Id { get; set; }
         [ReadOnly(true)]
-        public string Nome { get; set; }
-        public double Nota { get; set; }
+        public string Name { get; set; }
+        public double Grade { get; set; }
     }
 }

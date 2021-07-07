@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters;
-using Avax.Core.NoSQLData;
-using Avax.Core.NoSQLData.BussinesLayer;
+using Avax.Core.NoSQLData_Examples;
+using Avax.Core.NoSQLData_Examples.XTablesApp;
 using NoSqliteX;
 namespace Avax.Core
 {
@@ -17,6 +17,8 @@ namespace Avax.Core
         {
             try
             {
+                // Setting up the serializer
+                
                 NoSqLiteXStarter.Start(new NoSqLiteXStarterParams
                 {
                     AssemblyFormat = FormatterAssemblyStyle.Full,
@@ -26,8 +28,17 @@ namespace Avax.Core
                     TypeFormat = FormatterTypeStyle.XsdString
                 }, path);
 
-                InstanceBuilder.AvConfigs = new Configs();
-                InstanceBuilder.PautaExamples = new PautaExamples();
+                //  initializing the tables
+                
+                XTables.Configs = new Configs();
+                XTables.FinalAgenda = new FinalAgendaTable();
+                
+                // taking advantage of the boot time to enter predefined settings for examples
+                XTables.Configs.Insert(Repository.DefaultConfig);
+                if (XTables.FinalAgenda.Items.Count <= 0)
+                    XTables.FinalAgenda.Insert(Repository.DefaultFinalAgendaData);
+               
+                
                 return true;
             }
             catch (Exception e)
@@ -36,23 +47,6 @@ namespace Avax.Core
                 return false;
             }
         }
-        /// <summary>
-        /// try conect with de SQLServer
-        /// </summary>
-        /// <param name="conectionString"></param>
-        /// <returns></returns>
-        public static bool SqlStart(string conectionString)
-        {
-            try
-            {
-               // var cod = new Sape.Data.Core.ApiSettings().Init("##443$KJRJKRKSDSLKDL",
-                   // conectionString);
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
+      
     }
 }
