@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Xuxunguinho - https://github.com/Xuxunguinho
+ * Copyright (c) 2019 Xuxunguinho - https://github.com/Xuxunguinho/Lex
  *
  * Licensed under the terms of the MIT license, see the enclosed LICENSE
  * file for details.
