@@ -1,4 +1,12 @@
-﻿using System;
+﻿
+/*
+ * Copyright (c) 2020 Xuxunguinho - https://github.com/Xuxunguinho
+ *
+ * Licensed under the terms of the MIT license, see the enclosed LICENSE
+ * file for details.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -8,36 +16,36 @@ using System.Reflection;
 using System.Text;
 using Lex;
 
-namespace Avax
+namespace DataEvaluatorX
 {
-    public class Core<T>
+    public class Evaluator<T>
     {
         private  Dictionary<string,string> _collectionClass;
         private  string _script;
         public readonly Dictionary<string, List<T>> ColletionsByClassifications = new Dictionary<string, List<T>>();
-        private ScriptCore<T> _scriptCore;
-        private readonly EventHandler<AvaxTrigger<T>> _afterAvail;
-        private readonly EventHandler<AvaxTrigger<T>> _beforeAvail;
+        private EvaluatorScriptCore<T> _evaluatorScriptCore;
+        private readonly EventHandler<EvaluatorXTrigger<T>> _afterAvail;
+        private readonly EventHandler<EvaluatorXTrigger<T>> _beforeAvail;
         public List<string> Fields;
         public string ResultDescription { get; set; }
 
-        public virtual void OnAfterAvail(object sender, AvaxTrigger<T> e)
+        public virtual void OnAfterAvail(object sender, EvaluatorXTrigger<T> e)
         {
             // execute aqui o codigo para antes de Inserir o Item [e.Inserted] 
         }
 
-        public virtual void OnBeforeAvail(object sender, AvaxTrigger<T> e)
+        public virtual void OnBeforeAvail(object sender, EvaluatorXTrigger<T> e)
         {
             // execute aqui o codigo para antes de Inserir o Item [e.Inserted] 
         }
 
-        public Core()
+        public Evaluator()
         {
             _afterAvail += OnAfterAvail;
             _beforeAvail += OnBeforeAvail;
             Fields = new List<string>();
             var fields = typeof(T).DeserializeProperties();
-             _scriptCore = new ScriptCore<T>();
+             _evaluatorScriptCore = new EvaluatorScriptCore<T>();
             foreach (PropertyDescriptor x in fields)
             {
                 if (x.GetChildProperties()?.Count > 1)
@@ -46,13 +54,13 @@ namespace Avax
                     // list.AddRange(from PropertyDescriptor z in x.GetChildProperties() select z.Name);
                     foreach (PropertyDescriptor z in x.GetChildProperties())
                     {
-                        _scriptCore.AddBind($"{x.Name}_{z.Name}", new[] {x.Name, z.Name});
+                        _evaluatorScriptCore.AddBind($"{x.Name}_{z.Name}", new[] {x.Name, z.Name});
                         Fields.Add($"{x.Name}_{z.Name}");
                     }
                 }
                 else
                 {
-                    _scriptCore.AddBind(x.Name, new[] {x.Name});
+                    _evaluatorScriptCore.AddBind(x.Name, new[] {x.Name});
                     Fields.Add(x.Name);
                 }
             }
@@ -86,15 +94,15 @@ namespace Avax
 
                 // binding
 
-                _scriptCore.AddBind("idDisciplina", exprDiscPk);
-                _scriptCore.AddBind("discId", exprDiscPk);
-                _scriptCore.AddBind("nomeDisciplina", exprDiscName);
-                _scriptCore.AddBind("discName", exprDiscName);
+                _evaluatorScriptCore.AddBind("idDisciplina", exprDiscPk);
+                _evaluatorScriptCore.AddBind("discId", exprDiscPk);
+                _evaluatorScriptCore.AddBind("nomeDisciplina", exprDiscName);
+                _evaluatorScriptCore.AddBind("discName", exprDiscName);
 
-                _scriptCore.SetValueForBind("$nota", expreFieldForEvalKey);
-                _scriptCore.SetValueForBind("$result", exprResult);
-                _scriptCore.SetValueForBind("$obs", exprObs);
-                _scriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
+                _evaluatorScriptCore.SetValueForBind("$nota", expreFieldForEvalKey);
+                _evaluatorScriptCore.SetValueForBind("$result", exprResult);
+                _evaluatorScriptCore.SetValueForBind("$obs", exprObs);
+                _evaluatorScriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
 
                 var enumerable = source as T[] ?? enumerable1.ToArray();
 
@@ -102,12 +110,12 @@ namespace Avax
                 {
                     var av = enumerable.Where(x => itemKeyDistinct(x, s))?.ToList();
 
-                    OnBeforeAvail(this, new AvaxTrigger<T>(s, av));
+                    OnBeforeAvail(this, new EvaluatorXTrigger<T>(s, av));
 
-                    _scriptCore.SetValueForBind("$ctxI", s);
-                    _scriptCore.SetValueForBind("$ctxC", av);
+                    _evaluatorScriptCore.SetValueForBind("$ctxI", s);
+                    _evaluatorScriptCore.SetValueForBind("$ctxC", av);
 
-                    _scriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
+                    _evaluatorScriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
 
 
                     // Make collections based on results
@@ -116,7 +124,7 @@ namespace Avax
                     else
                         ColletionsByClassifications.Add(s.GetDynValue(exprResult).ToString(), new List<T> {s});
 
-                    OnAfterAvail(this, new AvaxTrigger<T>(s, av));
+                    OnAfterAvail(this, new EvaluatorXTrigger<T>(s, av));
                     // helper.Run(_script);
                 }
 
@@ -176,7 +184,7 @@ namespace Avax
                 var enumerable1 = source as T[] ?? source.ToArray();
                 var scount = enumerable1?.Distinct(itemKey).Count();
                 
-                _scriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
+                _evaluatorScriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
 
                 var enumerable = source as T[] ?? enumerable1.ToArray();
 
@@ -184,14 +192,14 @@ namespace Avax
                 {
                     var av = enumerable.Where(x => itemKeyDistinct(x, s))?.ToArray();
 
-                    OnBeforeAvail(this, new AvaxTrigger<T>(s, av));
+                    OnBeforeAvail(this, new EvaluatorXTrigger<T>(s, av));
 
-                    _scriptCore.SetValueForBind("$ctxI", s);
-                    _scriptCore.SetValueForBind("$ctxC", av);
+                    _evaluatorScriptCore.SetValueForBind("$ctxI", s);
+                    _evaluatorScriptCore.SetValueForBind("$ctxC", av);
 
-                    // _scriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
+                    // _evaluatorScriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
 
-                    var exprResult = _scriptCore._masterBinder["resultKey"] as string[];
+                    var exprResult = _evaluatorScriptCore._masterBinder["resultKey"] as string[];
 
                     // Make collections based on results
                     if (ColletionsByClassifications.ContainsKey(s.GetDynValue(exprResult).ToString()))
@@ -199,7 +207,7 @@ namespace Avax
                     else
                         ColletionsByClassifications.Add(s.GetDynValue(exprResult).ToString(), new List<T> {s});
 
-                    OnAfterAvail(this, new AvaxTrigger<T>(s, av));
+                    OnAfterAvail(this, new EvaluatorXTrigger<T>(s, av));
                     // helper.Run(_script);
                 }
 

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lizzie", "..\lizzie\lizzie\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lex", "..\Lex\Lex\Lex.csproj", "{3CF7A23C-023C-41BF-AF2C-CD5599974993}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Avax", "Avax.Core\Avax.csproj", "{292CA8D5-E092-4553-9F12-8704DE719FA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataEvaluatorX", "Avax.Core\DataEvaluatorX.csproj", "{292CA8D5-E092-4553-9F12-8704DE719FA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

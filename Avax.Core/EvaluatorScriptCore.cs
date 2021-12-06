@@ -1,4 +1,12 @@
-﻿using System;
+﻿
+/*
+ * Copyright (c) 2020 Xuxunguinho - https://github.com/Xuxunguinho
+ *
+ * Licensed under the terms of the MIT license, see the enclosed LICENSE
+ * file for details.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,23 +15,23 @@ using lizzie;
 using lizzie.exceptions;
 using static Lex.Lex;
 
-namespace Avax
+namespace DataEvaluatorX
 {
     /// <summary>
     /// implementing Lizzie for application
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class ScriptCore<T>
+    internal class EvaluatorScriptCore<T>
     {
         private static Func<IEnumerable<string>, object, object> GetValueFromKey => (key, x) => x.GetDynValue(key);
-        public readonly Binder<ScriptCore<T>> _masterBinder;
+        public readonly Binder<EvaluatorScriptCore<T>> _masterBinder;
 
         /// <summary>
         ///  class builder
         /// </summary>
-        public ScriptCore()
+        public EvaluatorScriptCore()
         {
-            _masterBinder = new Binder<ScriptCore<T>>();
+            _masterBinder = new Binder<EvaluatorScriptCore<T>>();
             LambdaCompiler.BindFunctions(_masterBinder);
 
             AddBind("$nota", new string[] { });
@@ -68,7 +76,7 @@ namespace Avax
         /// <returns></returns>
         private object Run(string code)
         {
-            var lambda = LambdaCompiler.Compile(new ScriptCore<T>(), _masterBinder, code);
+            var lambda = LambdaCompiler.Compile(new EvaluatorScriptCore<T>(), _masterBinder, code);
             return lambda();
         }
 
@@ -86,7 +94,7 @@ namespace Avax
             {
                 var symbolName = key + "s";
                 var expr = classes[key].SupressSpace();
-                var exec = Run(expr) as Function<ScriptCore<T>>;
+                var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
                 // var data = ctxC?.Where(x =>
                 //         exec != null && )
                 //     ?.ToList();
@@ -110,7 +118,7 @@ namespace Avax
             //     {
             //         var symbolName = key + "s";
             //         var expr = subClasses[key].SupressSpace();
-            //         var exec = Run(expr) as Function<ScriptCore<T>>;
+            //         var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
             //         var data = av.Where(x =>
             //                 exec != null && (bool) exec(this, _masterBinder, new Arguments {getValueFromKey(field, x)}))
             //             ?.ToList();
@@ -138,7 +146,7 @@ namespace Avax
                 var symbolName = key + "s";
                 //get script from classe and execute
                 var expr = classes[key].SupressSpace();
-                var exec = Run(expr) as Function<ScriptCore<T>>;
+                var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
                 //get collection with filter
                 var data = ctxC?.Where(x =>
                         exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}))
@@ -153,7 +161,7 @@ namespace Avax
             //     {
             //         var symbolName = key + "s";
             //         var expr = subClasses[key].SupressSpace();
-            //         var exec = Run(expr) as Function<ScriptCore<T>>;
+            //         var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
             //         var data = av.Where(x =>
             //                 exec != null && (bool) exec(this, _masterBinder, new Arguments {getValueFromKey(field, x)}))
             //             ?.ToList();
@@ -174,7 +182,7 @@ namespace Avax
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "=>")]
-        private object Contains(Binder<ScriptCore<T>> binder, Arguments args)
+        private object Contains(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.Count != 3)
                 throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
@@ -216,7 +224,7 @@ namespace Avax
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "!=>")]
-        private object NotContains(Binder<ScriptCore<T>> binder, Arguments args)
+        private object NotContains(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.IsNullOrEmpty()) return true;
             if (args.Count != 3)
@@ -286,7 +294,7 @@ namespace Avax
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         [Bind(Name = "$R->")]
-        private object Result(Binder<ScriptCore<T>> binder, Arguments args)
+        private object Result(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             try
             {
@@ -355,7 +363,7 @@ namespace Avax
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "&")]
-        private object And(Binder<ScriptCore<T>> binder, Arguments args)
+        private object And(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
@@ -380,7 +388,7 @@ namespace Avax
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
         [Bind(Name = "ou")]
-        private object Or(Binder<ScriptCore<T>> binder, Arguments args)
+        private object Or(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
@@ -389,7 +397,7 @@ namespace Avax
 
 
         // [Bind(Name = "menorQ")]
-        // public object  Lt (Binder<ScriptCore<T>> binder, Arguments arguments)
+        // public object  Lt (Binder<EvaluatorScriptCore<T>> binder, Arguments arguments)
         // {
         //     
         //     
