@@ -2,10 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Avax.Core</RootNamespace>
+    <RootNamespace>Avax</RootNamespace>
     <Company>https://github.com/Xuxunguinho</Company>
     <AssemblyVersion>0.1.1</AssemblyVersion>
     <FileVersion>0.1.1</FileVersion>
+    <AssemblyName>Avax</AssemblyName>
+    <Product>Avax</Product>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,8 @@
     <Compile Remove="SQLData\**" />
     <Compile Remove="NoSQLData\Objects\**" />
     <Compile Remove="Interfaces\**" />
+    <Compile Remove="NoSQLData_Examples\**" />
+    <Compile Remove="Starter.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,6 +58,7 @@
     <None Remove="SQLData\**" />
     <None Remove="NoSQLData\Objects\**" />
     <None Remove="Interfaces\**" />
+    <None Remove="NoSQLData_Examples\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,6 +71,7 @@
     <EmbeddedResource Remove="SQLData\**" />
     <EmbeddedResource Remove="NoSQLData\Objects\**" />
     <EmbeddedResource Remove="Interfaces\**" />
+    <EmbeddedResource Remove="NoSQLData_Examples\**" />
   </ItemGroup>
 
   <ItemGroup>

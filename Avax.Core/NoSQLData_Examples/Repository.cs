@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Avax.Core.NoSQLData_Examples.Objects;
+using Avax.NoSQLData_Examples.Objects;
 
-namespace Avax.Core.NoSQLData_Examples
+namespace Avax.NoSQLData_Examples
 {
     public static class Repository
     {
@@ -358,7 +358,7 @@ namespace Avax.Core.NoSQLData_Examples
             Course = 0,
             Grade = 0,
 
-            CollectionsClass = new Dictionary<string, object>
+            CollectionsClass = new Dictionary<string, string>
             {
                 {"negativa", "funcao({menorQ(nota,8)},@nota)"},
                 {"positiva", "funcao({ maiorOig(nota, 10) }, @nota)"},

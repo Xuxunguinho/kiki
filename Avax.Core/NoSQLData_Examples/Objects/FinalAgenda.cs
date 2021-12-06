@@ -1,7 +1,7 @@
 ﻿using System;
 using NoSqliteX;
 
-namespace Avax.Core.NoSQLData_Examples.Objects
+namespace Avax.NoSQLData_Examples.Objects
 {
     [Serializable]
     public class FinalAgenda

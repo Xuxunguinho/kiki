@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace Avax.Core
+namespace Avax
 {
     public interface IAvaxConfiguration
     {
-        Dictionary<string, object> CollectionsClass { get; set; }
+        Dictionary<string, string> CollectionsClass { get; set; }
         Dictionary<string, object> Results { get; set; }
     }
 }

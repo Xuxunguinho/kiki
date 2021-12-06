@@ -1,6 +1,6 @@
-﻿using Avax.Core.NoSQLData_Examples.Interfaces;
+﻿using Avax.NoSQLData_Examples.Interfaces;
 
-namespace Avax.Core.NoSQLData_Examples
+namespace Avax.NoSQLData_Examples
 {
     public static class XTables
     {

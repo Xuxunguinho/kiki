@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Avax.Core.NoSQLData_Examples.Interfaces;
-using Avax.Core.NoSQLData_Examples.Objects;
+using Avax.NoSQLData_Examples.Interfaces;
+using Avax.NoSQLData_Examples.Objects;
 using Lex;
 using NoSqliteX;
 
-namespace Avax.Core.NoSQLData_Examples.XTablesApp
+namespace Avax.NoSQLData_Examples.XTablesApp
 {
     [NoSqLiteXFileTable("FinalAgendaTable")]
     internal class FinalAgendaTable : NoSqliteXFileTable<FinalAgenda>, IFinalAgenda

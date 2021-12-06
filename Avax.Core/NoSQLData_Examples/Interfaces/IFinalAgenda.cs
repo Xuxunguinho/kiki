@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Avax.Core.NoSQLData_Examples.Objects;
+using Avax.NoSQLData_Examples.Objects;
 
-namespace Avax.Core.NoSQLData_Examples.Interfaces
+namespace Avax.NoSQLData_Examples.Interfaces
 {
   public  interface IFinalAgenda
     {

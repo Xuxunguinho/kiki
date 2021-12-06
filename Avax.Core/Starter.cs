@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters;
-using Avax.Core.NoSQLData_Examples;
-using Avax.Core.NoSQLData_Examples.XTablesApp;
+using Avax.NoSQLData_Examples;
+using Avax.NoSQLData_Examples.XTablesApp;
 using NoSqliteX;
-namespace Avax.Core
+
+namespace Avax
 {
     public static class Starter
     {
@@ -13,7 +14,7 @@ namespace Avax.Core
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static bool NoSqlStart(string path)
+        public static  bool NoSqlStart(string path)
         {
             try
             {
@@ -38,7 +39,6 @@ namespace Avax.Core
                 if (XTables.FinalAgenda.Items.Count <= 0)
                     XTables.FinalAgenda.Insert(Repository.DefaultFinalAgendaData);
                
-                
                 return true;
             }
             catch (Exception e)
