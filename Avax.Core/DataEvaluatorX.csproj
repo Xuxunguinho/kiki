@@ -36,13 +36,6 @@
  
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Lex\Lex\Lex.csproj" />
-    <ProjectReference Include="..\..\lizzie\lizzie\lizzie.csproj" />
-  </ItemGroup>
-
- 
-
-  <ItemGroup>
     <EmbeddedResource Remove="NoSQLData_Examples\**" />
     <EmbeddedResource Remove="SQLData\**" />
   </ItemGroup>
@@ -52,6 +45,12 @@
   <ItemGroup>
     <None Remove="NoSQLData_Examples\**" />
     <None Remove="SQLData\**" />
+  </ItemGroup>
+
+ 
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.0.1" />
   </ItemGroup>
 
 </Project>

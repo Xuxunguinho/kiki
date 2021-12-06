@@ -10,10 +10,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Lex;
-using lizzie;
-using lizzie.exceptions;
-using static Lex.Lex;
+using DataEvaluatorX.lizzie;
+using DataEvaluatorX.lizzie.exceptions;
+using static DataEvaluatorX.Lex;
+using Arguments = DataEvaluatorX.lizzie.Arguments;
+using LambdaCompiler = DataEvaluatorX.lizzie.LambdaCompiler;
+using LizzieException = DataEvaluatorX.lizzie.exceptions.LizzieException;
 
 namespace DataEvaluatorX
 {
@@ -24,14 +26,14 @@ namespace DataEvaluatorX
     internal class EvaluatorScriptCore<T>
     {
         private static Func<IEnumerable<string>, object, object> GetValueFromKey => (key, x) => x.GetDynValue(key);
-        public readonly Binder<EvaluatorScriptCore<T>> _masterBinder;
+        public readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
 
         /// <summary>
         ///  class builder
         /// </summary>
         public EvaluatorScriptCore()
         {
-            _masterBinder = new Binder<EvaluatorScriptCore<T>>();
+            _masterBinder = new lizzie.Binder<EvaluatorScriptCore<T>>();
             LambdaCompiler.BindFunctions(_masterBinder);
 
             AddBind("$nota", new string[] { });
@@ -94,7 +96,7 @@ namespace DataEvaluatorX
             {
                 var symbolName = key + "s";
                 var expr = classes[key].SupressSpace();
-                var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
+                var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
                 // var data = ctxC?.Where(x =>
                 //         exec != null && )
                 //     ?.ToList();
@@ -146,7 +148,7 @@ namespace DataEvaluatorX
                 var symbolName = key + "s";
                 //get script from classe and execute
                 var expr = classes[key].SupressSpace();
-                var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
+                var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
                 //get collection with filter
                 var data = ctxC?.Where(x =>
                         exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}))
@@ -181,8 +183,8 @@ namespace DataEvaluatorX
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
-        [Bind(Name = "=>")]
-        private object Contains(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        [lizzie.Bind(Name = "=>")]
+        private object Contains(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.Count != 3)
                 throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
@@ -223,8 +225,8 @@ namespace DataEvaluatorX
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
-        [Bind(Name = "!=>")]
-        private object NotContains(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        [lizzie.Bind(Name = "!=>")]
+        private object NotContains(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.IsNullOrEmpty()) return true;
             if (args.Count != 3)
@@ -293,8 +295,8 @@ namespace DataEvaluatorX
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        [Bind(Name = "$R->")]
-        private object Result(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        [lizzie.Bind(Name = "$R->")]
+        private object Result(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             try
             {
@@ -362,8 +364,8 @@ namespace DataEvaluatorX
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
-        [Bind(Name = "&")]
-        private object And(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        [lizzie.Bind(Name = "&")]
+        private object And(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
@@ -387,8 +389,8 @@ namespace DataEvaluatorX
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
-        [Bind(Name = "ou")]
-        private object Or(Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        [lizzie.Bind(Name = "ou")]
+        private object Or(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
