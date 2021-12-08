@@ -1,5 +1,4 @@
-﻿
-/*
+﻿/*
  * Copyright (c) 2020 Xuxunguinho - https://github.com/Xuxunguinho
  *
  * Licensed under the terms of the MIT license, see the enclosed LICENSE
@@ -19,8 +18,8 @@ namespace DataEvaluatorX
 {
     public class Evaluator<T>
     {
-        private  Dictionary<string,string> _collectionClass;
-        private  string _script;
+        private Dictionary<string, string> _collectionClass;
+        private string _script;
         public readonly Dictionary<string, List<T>> ColletionsByClassifications = new Dictionary<string, List<T>>();
         private EvaluatorScriptCore<T> _evaluatorScriptCore;
         private readonly EventHandler<EvaluatorXTrigger<T>> _afterAvail;
@@ -44,7 +43,7 @@ namespace DataEvaluatorX
             _beforeAvail += OnBeforeAvail;
             Fields = new List<string>();
             var fields = typeof(T).DeserializeProperties();
-             _evaluatorScriptCore = new EvaluatorScriptCore<T>();
+            _evaluatorScriptCore = new EvaluatorScriptCore<T>();
             foreach (PropertyDescriptor x in fields)
             {
                 if (x.GetChildProperties()?.Count > 1)
@@ -69,7 +68,8 @@ namespace DataEvaluatorX
             Expression<Func<T, object>> itemDisplayValue, Expression<Func<T, object>> itemKey, Func<T, T,
                 bool> itemKeyDistinct, Expression<Func<T, object>> evalKey, Expression<Func<T, object>> evalBasedKey,
             Expression<Func<T, object>> evalBasedKeyDisplayValue, Expression<Func<T, object>> resultKey,
-            Expression<Func<T, object>> obsKey,string script, Dictionary<string, string> collectionClass,Dictionary<string, string> collectionSubclasses = null)
+            Expression<Func<T, object>> obsKey, string script, Dictionary<string, string> collectionClass,
+            Dictionary<string, string> collectionSubclasses = null)
         {
             try
             {
@@ -114,7 +114,7 @@ namespace DataEvaluatorX
                     _evaluatorScriptCore.SetValueForBind("$ctxI", s);
                     _evaluatorScriptCore.SetValueForBind("$ctxC", av);
 
-                    _evaluatorScriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
+                    _evaluatorScriptCore.Execute(_collectionClass, collectionClass, expreFieldForEvalKey, _script);
 
 
                     // Make collections based on results
@@ -143,15 +143,14 @@ namespace DataEvaluatorX
                 ResultDescription = str.ToString();
 
 
-
                 stow.Stop();
-                var message = $"The results were presented in -> {new TimeSpan(stow.ElapsedMilliseconds).Milliseconds}";
 
 
                 var msgBuilder = new StringBuilder();
-                msgBuilder.AppendLine($"Avax.core");
-                msgBuilder.AppendLine($"Executado com sucesso em {stow.ElapsedMilliseconds * 60} segundos");
-                message = msgBuilder.ToString();
+                msgBuilder.AppendLine($"DataEvaluatorX");
+                msgBuilder.AppendLine(
+                    $"Executado com sucesso em {TimeSpan.FromMilliseconds(stow.ElapsedMilliseconds).Seconds} segundos");
+                var message = msgBuilder.ToString();
 
                 return message;
             }
@@ -164,11 +163,12 @@ namespace DataEvaluatorX
                 return e.Message;
             }
         }
-        
+
         public string Run(IEnumerable<T> source
             , Expression<Func<T, object>> itemKey, Func<T, T,
                 bool> itemKeyDistinct,
-           string script, Dictionary<string, string> collectionClass,Dictionary<string, string> collectionSubclasses = null)
+            string script, Dictionary<string, string> collectionClass,
+            Dictionary<string, string> collectionSubclasses = null)
         {
             try
             {
@@ -182,7 +182,7 @@ namespace DataEvaluatorX
                 // expressions
                 var enumerable1 = source as T[] ?? source.ToArray();
                 var scount = enumerable1?.Distinct(itemKey).Count();
-                
+
                 _evaluatorScriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
 
                 var enumerable = source as T[] ?? enumerable1.ToArray();

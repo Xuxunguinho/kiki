@@ -10,8 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DataEvaluatorX.lizzie;
-using DataEvaluatorX.lizzie.exceptions;
 using static DataEvaluatorX.Lex;
 using Arguments = DataEvaluatorX.lizzie.Arguments;
 using LambdaCompiler = DataEvaluatorX.lizzie.LambdaCompiler;
@@ -104,7 +102,7 @@ namespace DataEvaluatorX
                 foreach (var x in ctxC)
                 {
                     _masterBinder["$ctxI"] = x;
-                    if ((bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(field, x)}))
+                    if ( exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(field, x)}) is bool )
                     {
                         data.Add(x);
                     }
@@ -115,18 +113,18 @@ namespace DataEvaluatorX
             }
 
             // getting subclasses
-            // if (subClasses?.Keys != null)
-            //     foreach (var key in subClasses?.Keys)
-            //     {
-            //         var symbolName = key + "s";
-            //         var expr = subClasses[key].SupressSpace();
-            //         var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
-            //         var data = av.Where(x =>
-            //                 exec != null && (bool) exec(this, _masterBinder, new Arguments {getValueFromKey(field, x)}))
-            //             ?.ToList();
-            //         _masterBinder[symbolName] = data;
-            //         // dictionary.Add(symbolName, data);
-            //     }
+            if (subClasses?.Keys != null)
+                foreach (var key in subClasses?.Keys)
+                {
+                    var symbolName = key + "s";
+                    var expr = subClasses[key].SupressSpace();
+                    var exec = Run(expr) as  lizzie.Function<EvaluatorScriptCore<T>>;;
+                    var data = ctxC?.Where(x =>
+                            exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(field, x)}))
+                        ?.ToList();
+                    _masterBinder[symbolName] = data;
+                    // dictionary.Add(symbolName, data);
+                }
             SetValueForBind("result_map", dictionary);
             Run(script);
         }
