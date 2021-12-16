@@ -105,25 +105,25 @@ namespace DataEvaluatorX
 
                 var enumerable = source as T[] ?? enumerable1.ToArray();
 
-                foreach (var s in enumerable.Distinct(itemKey))
+                foreach (var ctxItem in enumerable.Distinct(itemKey))
                 {
-                    var av = enumerable.Where(x => itemKeyDistinct(x, s))?.ToList();
+                    var ctxCollection = enumerable.Where(x => itemKeyDistinct(x, ctxItem))?.ToList();
 
-                    OnBeforeAvail(this, new EvaluatorXTrigger<T>(s, av));
+                    OnBeforeAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
 
-                    _evaluatorScriptCore.SetValueForBind("$ctxI", s);
-                    _evaluatorScriptCore.SetValueForBind("$ctxC", av);
+                    _evaluatorScriptCore.SetValueForBind("$ctxI", ctxItem);
+                    _evaluatorScriptCore.SetValueForBind("$ctxC", ctxCollection);
 
                     _evaluatorScriptCore.Execute(_collectionClass, collectionClass, expreFieldForEvalKey, _script);
 
 
                     // Make collections based on results
-                    if (ColletionsByClassifications.ContainsKey(s.GetDynValue(exprResult).ToString()))
-                        ColletionsByClassifications[s.GetDynValue(exprResult).ToString()].Add(s);
+                    if (ColletionsByClassifications.ContainsKey(ctxItem.GetDynValue(exprResult).ToString()))
+                        ColletionsByClassifications[ctxItem.GetDynValue(exprResult).ToString()].Add(ctxItem);
                     else
-                        ColletionsByClassifications.Add(s.GetDynValue(exprResult).ToString(), new List<T> {s});
+                        ColletionsByClassifications.Add(ctxItem.GetDynValue(exprResult).ToString(), new List<T> {ctxItem});
 
-                    OnAfterAvail(this, new EvaluatorXTrigger<T>(s, av));
+                    OnAfterAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
                     // helper.Run(_script);
                 }
 

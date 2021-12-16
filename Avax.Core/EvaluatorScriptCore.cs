@@ -89,7 +89,8 @@ namespace DataEvaluatorX
                 throw new Exception("as classes de classificação não podem ser nulas ou vazias");
             var ctxC = _masterBinder["$ctxC"] as List<T>;
             // var evalKey = _masterBinder["evalKey"] as string[];
-            
+
+            var enumerable = field as string[] ?? field.ToArray();
             foreach (var key in classes?.Keys)
             {
                 var symbolName = key + "s";
@@ -99,15 +100,16 @@ namespace DataEvaluatorX
                 //         exec != null && )
                 //     ?.ToList();
                 var data= new List<T>();
-                foreach (var x in ctxC)
-                {
-                    _masterBinder["$ctxI"] = x;
-                    if ( exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(field, x)}) is bool )
+                if (ctxC != null)
+                    foreach (var x in ctxC)
                     {
-                        data.Add(x);
+                        _masterBinder["$ctxI"] = x;
+                        if (exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}) is bool)
+                        {
+                            data.Add(x);
+                        }
                     }
-                }
-                
+
                 _masterBinder[symbolName] = data;
                 dictionary.Add(symbolName, data);
             }
@@ -120,7 +122,7 @@ namespace DataEvaluatorX
                     var expr = subClasses[key].SupressSpace();
                     var exec = Run(expr) as  lizzie.Function<EvaluatorScriptCore<T>>;;
                     var data = ctxC?.Where(x =>
-                            exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(field, x)}))
+                            exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}))
                         ?.ToList();
                     _masterBinder[symbolName] = data;
                     // dictionary.Add(symbolName, data);
@@ -129,49 +131,7 @@ namespace DataEvaluatorX
             Run(script);
         }
 
-        public void Execute(Dictionary<string, string> classes,
-             Dictionary<string, string> subClasses
-            , string script)
-        {
-            var dictionary = new Dictionary<string, List<T>>();
-
-            if (classes?.Keys == null)
-                throw new Exception("as classes de classificação não podem ser nulas ou vazias");
-          
-            var ctxC = _masterBinder["$ctxC"] as T[];
-            var evalKey = _masterBinder["evalKey"] as string[];
-            
-            foreach (var key in classes?.Keys)
-            {
-                var symbolName = key + "s";
-                //get script from classe and execute
-                var expr = classes[key].SupressSpace();
-                var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
-                //get collection with filter
-                var data = ctxC?.Where(x =>
-                        exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}))
-                    ?.ToList();
-                _masterBinder[symbolName] = data;
-                dictionary.Add(symbolName, data);
-            }
-
-            // getting subclasses
-            // if (subClasses?.Keys != null)
-            //     foreach (var key in subClasses?.Keys)
-            //     {
-            //         var symbolName = key + "s";
-            //         var expr = subClasses[key].SupressSpace();
-            //         var exec = Run(expr) as Function<EvaluatorScriptCore<T>>;
-            //         var data = av.Where(x =>
-            //                 exec != null && (bool) exec(this, _masterBinder, new Arguments {getValueFromKey(field, x)}))
-            //             ?.ToList();
-            //         _masterBinder[symbolName] = data;
-            //         // dictionary.Add(symbolName, data);
-            //     }
-            SetValueForBind("result_map", dictionary);
-            Run(script);
-        }
-
+       
         #region extending Lizzie
 
         /// <summary>
@@ -237,8 +197,6 @@ namespace DataEvaluatorX
             if (((IEnumerable<T>) list).IsNullOrEmpty()) return true;
 
             var equate = args.Get(1) as IEnumerable<object>;
-            if (equate.IsNullOrEmpty()) return true;
-
             var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
             if (objects.IsNullOrEmpty()) return true;
 
@@ -267,9 +225,7 @@ namespace DataEvaluatorX
 #if DEBUG
 
             var str = field.Aggregate(string.Empty, (current, x) => current + (current.IsNullOrEmpty() ? x : ", " + x));
-            // Console.WriteLine(field);
-            // Console.WriteLine(t1.ToString());
-            // Console.WriteLine(t2.ToString());
+           
 #endif
             if (t1 != t2)
                 if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
@@ -280,8 +236,7 @@ namespace DataEvaluatorX
                                             "deve ser do memo tipo que os itens do conjunto de comparação");
 
 
-            var listR = equate?.Select(x => enumerable?.Count(z => z.GetDynValue(field).Compare(x)) == 0)?.ToList() ??
-                        new List<bool>();
+            var listR = objects?.Select(x => enumerable?.Count(z => z.GetDynValue(field).Compare(x)) == 0)?.ToList();
 
             return (listR.Contains(true) && !listR.Contains(false)) || (!listR.Contains(true) && listR.Contains(false));
         }
