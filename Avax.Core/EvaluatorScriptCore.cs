@@ -96,6 +96,7 @@ namespace DataEvaluatorX
                 var symbolName = key + "s";
                 var expr = classes[key].SupressSpace();
                 var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
+                
                 // var data = ctxC?.Where(x =>
                 //         exec != null && )
                 //     ?.ToList();
@@ -103,11 +104,12 @@ namespace DataEvaluatorX
                 if (ctxC != null)
                     foreach (var x in ctxC)
                     {
+                        
                         _masterBinder["$ctxI"] = x;
-                        if (exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}) is bool)
-                        {
+                        if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}) is bool
+                            condition)) continue;
+                        if(condition)
                             data.Add(x);
-                        }
                     }
 
                 _masterBinder[symbolName] = data;
@@ -115,18 +117,18 @@ namespace DataEvaluatorX
             }
 
             // getting subclasses
-            if (subClasses?.Keys != null)
-                foreach (var key in subClasses?.Keys)
-                {
-                    var symbolName = key + "s";
-                    var expr = subClasses[key].SupressSpace();
-                    var exec = Run(expr) as  lizzie.Function<EvaluatorScriptCore<T>>;;
-                    var data = ctxC?.Where(x =>
-                            exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}))
-                        ?.ToList();
-                    _masterBinder[symbolName] = data;
-                    // dictionary.Add(symbolName, data);
-                }
+            // if (subClasses?.Keys != null)
+            //     foreach (var key in subClasses?.Keys)
+            //     {
+            //         var symbolName = key + "s";
+            //         var expr = subClasses[key].SupressSpace();
+            //         var exec = Run(expr) as  lizzie.Function<EvaluatorScriptCore<T>>;;
+            //         var data = ctxC?.Where(x =>
+            //                 exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}))
+            //             ?.ToList();
+            //         _masterBinder[symbolName] = data;
+            //         // dictionary.Add(symbolName, data);
+            //     }
             SetValueForBind("result_map", dictionary);
             Run(script);
         }
@@ -307,6 +309,8 @@ namespace DataEvaluatorX
             var str = pauta.Aggregate(string.Empty,
                 (current, x) => (current.IsNullOrEmpty() ? current : current + ", ") +
                                 x.GetDynValue(dicNameKeys) + $"({GetValueFromKey(notaKey, x)})");
+          
+            Console.WriteLine(str);
             return $"{str} ";
         }
 

@@ -149,7 +149,7 @@ namespace DataEvaluatorX
                 var msgBuilder = new StringBuilder();
                 msgBuilder.AppendLine($"DataEvaluatorX");
                 msgBuilder.AppendLine(
-                    $"Executado com sucesso em {TimeSpan.FromMilliseconds(stow.ElapsedMilliseconds).Seconds} segundos");
+                    $"Executado com sucesso em {TimeSpan.FromMilliseconds(stow.ElapsedMilliseconds).TotalSeconds} segundos");
                 var message = msgBuilder.ToString();
 
                 return message;
