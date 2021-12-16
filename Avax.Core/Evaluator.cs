@@ -76,7 +76,6 @@ namespace DataEvaluatorX
                 _collectionClass = collectionClass;
                 _script = script;
 
-
                 var stow = new Stopwatch();
                 stow.Start();
 
@@ -85,7 +84,7 @@ namespace DataEvaluatorX
                 var scount = enumerable1?.Distinct(itemKey).Count();
 
                 var expreFieldForEvalKey = evalKey.DeserializeExpression();
-                var exprNome = itemDisplayValue.DeserializeExpression();
+                var exprEvalKeyDisplayValue = itemDisplayValue.DeserializeExpression();
                 var exprResult = resultKey.DeserializeExpression();
                 var exprObs = obsKey.DeserializeExpression();
                 var exprDiscName = evalBasedKeyDisplayValue.DeserializeExpression();
@@ -93,12 +92,10 @@ namespace DataEvaluatorX
 
                 // binding
 
-                _evaluatorScriptCore.AddBind("idDisciplina", exprDiscPk);
-                _evaluatorScriptCore.AddBind("discId", exprDiscPk);
-                _evaluatorScriptCore.AddBind("nomeDisciplina", exprDiscName);
-                _evaluatorScriptCore.AddBind("discName", exprDiscName);
-
-                _evaluatorScriptCore.SetValueForBind("$nota", expreFieldForEvalKey);
+                _evaluatorScriptCore.SetValueForBind("evalKey", expreFieldForEvalKey);
+                _evaluatorScriptCore.AddBind("evalBasedKey", exprDiscPk);
+                _evaluatorScriptCore.AddBind("evalBasedKeyDisplayValue", exprDiscName);
+                _evaluatorScriptCore.AddBind("evalKeyDisplayValue", exprEvalKeyDisplayValue);
                 _evaluatorScriptCore.SetValueForBind("$result", exprResult);
                 _evaluatorScriptCore.SetValueForBind("$obs", exprObs);
                 _evaluatorScriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
@@ -114,7 +111,7 @@ namespace DataEvaluatorX
                     _evaluatorScriptCore.SetValueForBind("$ctxI", ctxItem);
                     _evaluatorScriptCore.SetValueForBind("$ctxC", ctxCollection);
 
-                    _evaluatorScriptCore.Execute(_collectionClass, collectionClass, expreFieldForEvalKey, _script);
+                    _evaluatorScriptCore.Execute(_collectionClass, collectionSubclasses, _script);
 
 
                     // Make collections based on results

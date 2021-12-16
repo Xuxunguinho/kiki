@@ -1,5 +1,4 @@
-﻿
-/*
+﻿/*
  * Copyright (c) 2020 Xuxunguinho - https://github.com/Xuxunguinho
  *
  * Licensed under the terms of the MIT license, see the enclosed LICENSE
@@ -34,7 +33,7 @@ namespace DataEvaluatorX
             _masterBinder = new lizzie.Binder<EvaluatorScriptCore<T>>();
             LambdaCompiler.BindFunctions(_masterBinder);
 
-            AddBind("$nota", new string[] { });
+
             AddBind("$result", new string[] { });
             AddBind("$obs", new string[] { });
 
@@ -42,7 +41,8 @@ namespace DataEvaluatorX
             AddBind("evalKeyDisplayValue", new string[] { });
             AddBind("evalBasedKey", new string[] { });
             AddBind("evalBasedKeyDisplayValue", new string[] { });
-            AddBind("result_map", new Dictionary<string, List<T>> { });
+            AddBind("ratingCollection", new Dictionary<string, List<T>> { });
+            AddBind("subCollection", new Dictionary<string, List<T>> { });
             AddBind("$ctxI", CreateInstance<T>());
             AddBind("$ctxC", new List<object>());
             AddBind("$pkAll", (Func<T, T, bool>) null);
@@ -80,60 +80,67 @@ namespace DataEvaluatorX
             return lambda();
         }
 
-        public void Execute(Dictionary<string, string> classes, Dictionary<string, string> subClasses,
-            IEnumerable<string> field,string script)
+        public void Execute(Dictionary<string, string> classes, Dictionary<string, string> subClasses, string script)
         {
             var dictionary = new Dictionary<string, List<T>>();
 
             if (classes?.Keys == null)
                 throw new Exception("as classes de classificação não podem ser nulas ou vazias");
             var ctxC = _masterBinder["$ctxC"] as List<T>;
-            // var evalKey = _masterBinder["evalKey"] as string[];
+            var evalKey = _masterBinder["evalKey"] as string[];
 
-            var enumerable = field as string[] ?? field.ToArray();
+
             foreach (var key in classes?.Keys)
             {
                 var symbolName = key + "s";
                 var expr = classes[key].SupressSpace();
                 var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
-                
-                // var data = ctxC?.Where(x =>
-                //         exec != null && )
-                //     ?.ToList();
-                var data= new List<T>();
+
+
+                var data = new List<T>();
                 if (ctxC != null)
                     foreach (var x in ctxC)
                     {
-                        
                         _masterBinder["$ctxI"] = x;
-                        if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}) is bool
+                        if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}) is bool
                             condition)) continue;
-                        if(condition)
+                        if (condition)
                             data.Add(x);
                     }
 
                 _masterBinder[symbolName] = data;
                 dictionary.Add(symbolName, data);
             }
+            SetValueForBind("ratingCollection", dictionary);
+           
+            var dictionary1 = new Dictionary<string, List<T>>();
+            if (subClasses?.Keys != null)
+                foreach (var key in subClasses?.Keys)
+                {
+                    var symbolName = key + "s";
+                    var expr = subClasses[key].SupressSpace();
+                    var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
+                    var data = new List<T>();
+                    if (ctxC != null)
+                        foreach (var x in ctxC)
+                        {
+                            _masterBinder["$ctxI"] = x;
+                            if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}) is bool
+                                condition)) continue;
+                            if (condition)
+                                data.Add(x);
+                        }
 
-            // getting subclasses
-            // if (subClasses?.Keys != null)
-            //     foreach (var key in subClasses?.Keys)
-            //     {
-            //         var symbolName = key + "s";
-            //         var expr = subClasses[key].SupressSpace();
-            //         var exec = Run(expr) as  lizzie.Function<EvaluatorScriptCore<T>>;;
-            //         var data = ctxC?.Where(x =>
-            //                 exec != null && (bool) exec(this, _masterBinder, new Arguments {GetValueFromKey(enumerable, x)}))
-            //             ?.ToList();
-            //         _masterBinder[symbolName] = data;
-            //         // dictionary.Add(symbolName, data);
-            //     }
-            SetValueForBind("result_map", dictionary);
+                    _masterBinder[symbolName] = data;
+                    dictionary1.Add(symbolName, data);
+                }
+
+            SetValueForBind("subCollection", dictionary1);
+            
             Run(script);
         }
 
-       
+
         #region extending Lizzie
 
         /// <summary>
@@ -150,32 +157,44 @@ namespace DataEvaluatorX
                 throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
             var list = args.Get(0);
             var equate = args.Get(1) as IEnumerable<object>;
-
-            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
-            for (var i = 0; i < objects.Count(); i++)
-                if (i < objects.Count() - 1)
-                    if (objects[i].GetType() != objects[i + 1].GetType())
-                        throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
-
             var field = args.Get(2) as string[];
-            var teg = CreateInstance<T>();
-            var t1 = objects?.FirstOrDefault()?.GetType();
-            var t2 = GetFieldType<T>(field);
+
+            if (args.Get(1) is IEnumerable<T> compList)
+            {
+                if (!(list is IEnumerable<T> source)) return false;
+                var enumerable = source as T[] ?? source.ToArray();
+              
+                return !enumerable.IsNullOrEmpty() &&
+                       compList.Any(x => enumerable.Count(z => z.GetDynValue(field).Compare(x.GetDynValue(field))) > 0);
+            }
+            else
+            {
+                var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+                for (var i = 0; i < objects.Count(); i++)
+                    if (i < objects.Count() - 1)
+                        if (objects[i].GetType() != objects[i + 1].GetType())
+                            throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
 
 
-            if (t1 != t2)
-                if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
-                    if (!(t1 is null) && !(t1.ToString() == "System.Int64" &&
-                                           (t2.ToString() == "System.Double" || t2.ToString() == "System.Float")))
-                        throw new Exception($"o campo de referência da " +
-                                            "função !=>(conjunto,comparacao,referencia) " +
-                                            "deve ser do memo tipo que os itens do conjunto de comparação");
+                var teg = CreateInstance<T>();
+                var t1 = objects?.FirstOrDefault()?.GetType();
+                var t2 = GetFieldType<T>(field);
 
 
-            if (!(list is IEnumerable<T> source)) return false;
-            var enumerable = source as T[] ?? source.ToArray();
-            if (enumerable.IsNullOrEmpty()) return false;
-            return !(equate is null) && equate.Any(x => enumerable.Count(z => z.GetDynValue(field).Compare(x)) > 0);
+                if (t1 != t2)
+                    if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
+                        if (!(t1 is null) && !(t1.ToString() == "System.Int64" &&
+                                               (t2.ToString() == "System.Double" || t2.ToString() == "System.Float")))
+                            throw new Exception($"o campo de referência da " +
+                                                "função !=>(conjunto,comparacao,referencia) " +
+                                                "deve ser do memo tipo que os itens do conjunto de comparação");
+
+
+                if (!(list is IEnumerable<T> source)) return false;
+                var enumerable = source as T[] ?? source.ToArray();
+                if (enumerable.IsNullOrEmpty()) return false;
+                return !(equate is null) && equate.Any(x => enumerable.Count(z => z.GetDynValue(field).Compare(x)) > 0);
+            }
         }
 
         /// <summary>
@@ -198,49 +217,65 @@ namespace DataEvaluatorX
             var list = args.Get(0);
             if (((IEnumerable<T>) list).IsNullOrEmpty()) return true;
 
-            var equate = args.Get(1) as IEnumerable<object>;
-            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
-            if (objects.IsNullOrEmpty()) return true;
 
-            var field = args.Get(2) as string[];
+            if (args.Get(1) is IEnumerable<T> compList)
+            {
+                if (!(list is IEnumerable<T> source)) return true;
+                var field = args.Get(2) as string[];
+                if (field.IsNullOrEmpty()) return true;
 
-            if (field.IsNullOrEmpty()) return true;
+                var listR = compList?.Select(x =>
+                        source?.Count(z => z.GetDynValue(field).Compare(x.GetDynValue(field))) == 0)
+                    ?.ToList();
 
-            for (var i = 0; i < objects.Count(); i++)
-                if (i < objects.Count() - 1)
-                    if (objects[i].GetType() != objects[i + 1].GetType())
-                        throw new LizzieException("Os paramentros da lista " +
-                                                  "de compração devem ser" +
-                                                  " do mesmo tipo");
+                return (listR.Contains(true) && !listR.Contains(false)) ||
+                       (!listR.Contains(true) && listR.Contains(false));
+            }
+            else
+            {
+                var equate = args.Get(1) as IEnumerable<object>;
+                var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+                if (objects.IsNullOrEmpty()) return true;
 
-            if (!(list is IEnumerable<T> source)) return true;
-            if (equate is null)
-                throw new LizzieException("A lista de " +
-                                          "comparadores não pode ser nula");
+                var field = args.Get(2) as string[];
 
-            var enumerable = source as T[] ?? source.ToArray();
-            if (enumerable.IsNullOrEmpty()) return true;
+                if (field.IsNullOrEmpty()) return true;
 
-            var teg = CreateInstance<T>();
-            var t1 = objects?.FirstOrDefault()?.GetType();
-            var t2 = GetFieldTypeNew<T>(field);
-#if DEBUG
+                for (var i = 0; i < objects.Count(); i++)
+                    if (i < objects.Count() - 1)
+                        if (objects[i].GetType() != objects[i + 1].GetType())
+                            throw new LizzieException("Os paramentros da lista " +
+                                                      "de compração devem ser" +
+                                                      " do mesmo tipo");
 
-            var str = field.Aggregate(string.Empty, (current, x) => current + (current.IsNullOrEmpty() ? x : ", " + x));
-           
-#endif
-            if (t1 != t2)
-                if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
-                    if (!(t1 is null) && !(t1.ToString() == "System.Int64" &&
-                                           (t2.ToString() == "System.Double" || t2.ToString() == "System.Float")))
-                        throw new Exception($"o campo de referência da " +
-                                            "função !=>(conjunto,comparacao,referencia) " +
-                                            "deve ser do memo tipo que os itens do conjunto de comparação");
+                if (!(list is IEnumerable<T> source)) return true;
+                if (equate is null)
+                    throw new LizzieException("A lista de " +
+                                              "comparadores não pode ser nula");
+
+                var enumerable = source as T[] ?? source.ToArray();
+                if (enumerable.IsNullOrEmpty()) return true;
+
+                var teg = CreateInstance<T>();
+                var t1 = objects?.FirstOrDefault()?.GetType();
+                var t2 = GetFieldTypeNew<T>(field);
 
 
-            var listR = objects?.Select(x => enumerable?.Count(z => z.GetDynValue(field).Compare(x)) == 0)?.ToList();
+                if (t1 != t2)
+                    if (!(t1 is null) && !(t1.ToString() == "System.Int64" && t2.ToString() == "System.Int32"))
+                        if (!(t1 is null) && !(t1.ToString() == "System.Int64" &&
+                                               (t2.ToString() == "System.Double" || t2.ToString() == "System.Float")))
+                            throw new Exception($"o campo de referência da " +
+                                                "função !=>(conjunto,comparacao,referencia) " +
+                                                "deve ser do memo tipo que os itens do conjunto de comparação");
 
-            return (listR.Contains(true) && !listR.Contains(false)) || (!listR.Contains(true) && listR.Contains(false));
+
+                var listR = objects?.Select(x => enumerable?.Count(z => z.GetDynValue(field).Compare(x)) == 0)
+                    ?.ToList();
+
+                return (listR.Contains(true) && !listR.Contains(false)) ||
+                       (!listR.Contains(true) && listR.Contains(false));
+            }
         }
 
         /// <summary>
@@ -261,14 +296,15 @@ namespace DataEvaluatorX
                     throw new Exception("o argumento tem de ser uma string");
 
                 var contextCollection = binder["$ctxC"] as List<T>;
-                var storedData = binder["result_map"] as Dictionary<string, List<T>>;
+                var storedData = binder["ratingCollection"] as Dictionary<string, List<T>>;
 
                 var contextItem = binder["$ctxI"].Cast<T>();
                 if (contextItem == null)
                     throw new Exception("o item de contexto nao pode ser nulo");
 
-                var nota = binder["$nota"] as string[];
-                var discName = binder["discName"] as string[];
+                var keyValue = binder["evalKey"] as string[];
+                var basedKeyDisplayValue = binder["evalBasedKeyDisplayValue"] as string[];
+
                 var exprObs = binder["$obs"] as string[];
                 var exprResult = binder["$result"] as string[];
                 var pkeyAll = binder["$pkAll"] as Func<T, T, bool>;
@@ -282,7 +318,7 @@ namespace DataEvaluatorX
                     foreach (var key in storedData.Keys)
                     {
                         var collection = storedData[key];
-                        var colet = StrBuilder(collection, nota, discName);
+                        var colet = StrBuilder(collection, keyValue, basedKeyDisplayValue);
                         obs.AppendLine($"    {key} -> {collection.Count}");
                         obs.AppendLine($"    {colet}");
                         obs.AppendLine();
@@ -303,13 +339,13 @@ namespace DataEvaluatorX
             }
         }
 
-        private static string StrBuilder(IEnumerable<T> pauta, IEnumerable<string> notaKey,
-            IEnumerable<string> dicNameKeys)
+        private static string StrBuilder(IEnumerable<T> collection, IEnumerable<string> key,
+            IEnumerable<string> basedKeyDisplayValue)
         {
-            var str = pauta.Aggregate(string.Empty,
+            var str = collection.Aggregate(string.Empty,
                 (current, x) => (current.IsNullOrEmpty() ? current : current + ", ") +
-                                x.GetDynValue(dicNameKeys) + $"({GetValueFromKey(notaKey, x)})");
-          
+                                x.GetDynValue(basedKeyDisplayValue) + $"({GetValueFromKey(key, x)})");
+
             Console.WriteLine(str);
             return $"{str} ";
         }
@@ -335,10 +371,10 @@ namespace DataEvaluatorX
                     if (objects[i].GetType() != objects[i + 1].GetType())
                         throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
 
-            return (args.Contains(true) && !args.Contains(false)) || (!args.Contains(true) && args.Contains(false));
+            return (args.Contains(true) && !args.Contains(false));
         }
-        
-       
+
+
         /// <summary>
         /// 
         /// </summary>
