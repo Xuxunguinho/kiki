@@ -195,7 +195,7 @@ namespace DataEvaluatorX
 
                     // _evaluatorScriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
 
-                    var exprResult = _evaluatorScriptCore._masterBinder["resultKey"] as string[];
+                    var exprResult = _evaluatorScriptCore.GetBindValue("resultKey") as string[];
 
                     // Make collections based on results
                     if (ColletionsByClassifications.ContainsKey(s.GetDynValue(exprResult).ToString()))

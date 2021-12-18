@@ -11,7 +11,6 @@ using System.Linq;
 using System.Text;
 using static DataEvaluatorX.Lex;
 using Arguments = DataEvaluatorX.lizzie.Arguments;
-using LambdaCompiler = DataEvaluatorX.lizzie.LambdaCompiler;
 using LizzieException = DataEvaluatorX.lizzie.exceptions.LizzieException;
 
 namespace DataEvaluatorX
@@ -23,7 +22,7 @@ namespace DataEvaluatorX
     internal class EvaluatorScriptCore<T>
     {
         private static Func<IEnumerable<string>, object, object> GetValueFromKey => (key, x) => x.GetDynValue(key);
-        public readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
+      private readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
 
         /// <summary>
         ///  class builder
@@ -31,7 +30,7 @@ namespace DataEvaluatorX
         public EvaluatorScriptCore()
         {
             _masterBinder = new lizzie.Binder<EvaluatorScriptCore<T>>();
-            LambdaCompiler.BindFunctions(_masterBinder);
+            lizzie.LambdaCompiler.BindFunctions(_masterBinder);
 
 
             AddBind("$result", new string[] { });
@@ -69,14 +68,12 @@ namespace DataEvaluatorX
             _masterBinder[name] = value;
         }
 
-        /// <summary>
-        ///  run Lizzie Script
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
-        private object Run(string code)
+
+        public object GetBindValue(string name) => _masterBinder[name];
+       
+        private object LambdaCompiler(string code)
         {
-            var lambda = LambdaCompiler.Compile(new EvaluatorScriptCore<T>(), _masterBinder, code);
+            var lambda = lizzie.LambdaCompiler.Compile(new EvaluatorScriptCore<T>(), _masterBinder, code);
             return lambda();
         }
 
@@ -94,7 +91,7 @@ namespace DataEvaluatorX
             {
                 var symbolName = key + "s";
                 var expr = classes[key].SupressSpace();
-                var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
+                var exec = LambdaCompiler(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
 
 
                 var data = new List<T>();
@@ -119,7 +116,7 @@ namespace DataEvaluatorX
                 {
                     var symbolName = key + "s";
                     var expr = subClasses[key].SupressSpace();
-                    var exec = Run(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
+                    var exec = LambdaCompiler(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
                     var data = new List<T>();
                     if (ctxC != null)
                         foreach (var x in ctxC)
@@ -137,19 +134,12 @@ namespace DataEvaluatorX
 
             SetValueForBind("subCollection", dictionary1);
             
-            Run(script);
+            LambdaCompiler(script);
         }
 
 
         #region extending Lizzie
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="binder"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        /// <exception cref="LizzieException"></exception>
+ 
         [lizzie.Bind(Name = "=>")]
         private object Contains(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
@@ -278,13 +268,6 @@ namespace DataEvaluatorX
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="binder"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
         [lizzie.Bind(Name = "$R->")]
         private object Result(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
@@ -350,13 +333,7 @@ namespace DataEvaluatorX
             return $"{str} ";
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="binder"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        /// <exception cref="LizzieException"></exception>
+   
         [lizzie.Bind(Name = "&")]
         private object And(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
@@ -374,14 +351,6 @@ namespace DataEvaluatorX
             return (args.Contains(true) && !args.Contains(false));
         }
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="binder"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        /// <exception cref="LizzieException"></exception>
         [lizzie.Bind(Name = "ou")]
         private object Or(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
@@ -389,26 +358,7 @@ namespace DataEvaluatorX
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
             return args.Aggregate(false, (current, x) => current || (bool) x);
         }
-
-
-        // [Bind(Name = "menorQ")]
-        // public object  Lt (Binder<EvaluatorScriptCore<T>> binder, Arguments arguments)
-        // {
-        //     
-        //     
-        //     if (arguments.Count != 2)
-        //         throw new LizzieRuntimeException("The 'less than' function must be given exactly 2 arguments.");
-        //     dynamic arg1 = arguments.Get(0);
-        //     dynamic arg2 = arguments.Get(1);
-        //
-        //     if (!(arg1 is string[])) return arg1 < arg2;
-        //     
-        //     var contextItem = binder["$ctxI"].Cast<T>();
-        //     var value = contextItem.GetDynValue((string[]) arg1);
-        //     return value < arg2;
-        //
-        // }
-
+       
         #endregion
     }
 }
