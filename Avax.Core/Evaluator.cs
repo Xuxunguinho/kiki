@@ -64,7 +64,7 @@ namespace DataEvaluatorX
             }
         }
 
-        public string Run(IEnumerable<T> source,
+        public EvaluatorResultMessage Run(IEnumerable<T> source,
             Expression<Func<T, object>> itemDisplayValue, Expression<Func<T, object>> itemKey, Func<T, T,
                 bool> itemKeyDistinct, Expression<Func<T, object>> evalKey, Expression<Func<T, object>> evalBasedKey,
             Expression<Func<T, object>> evalBasedKeyDisplayValue, Expression<Func<T, object>> resultKey,
@@ -73,9 +73,11 @@ namespace DataEvaluatorX
         {
             try
             {
+                
+                
                 _collectionClass = collectionClass;
                 _script = script;
-
+     
                 var stow = new Stopwatch();
                 stow.Start();
 
@@ -149,15 +151,15 @@ namespace DataEvaluatorX
                     $"Executado com sucesso em {TimeSpan.FromMilliseconds(stow.ElapsedMilliseconds).TotalSeconds} segundos");
                 var message = msgBuilder.ToString();
 
-                return message;
+                return  new EvaluatorResultMessage(message,Enums.EvaluatorMessageType.Success);
             }
             catch (TargetInvocationException e)
             {
-                return e.Message;
+                return new EvaluatorResultMessage(e.Message,Enums.EvaluatorMessageType.Error);
             }
             catch (Exception e)
             {
-                return e.Message;
+                return new EvaluatorResultMessage(e.Message,Enums.EvaluatorMessageType.Error);
             }
         }
 
@@ -181,7 +183,7 @@ namespace DataEvaluatorX
                 var scount = enumerable1?.Distinct(itemKey).Count();
 
                 _evaluatorScriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
-
+                ColletionsByClassifications.Clear();
                 var enumerable = source as T[] ?? enumerable1.ToArray();
 
                 foreach (var s in enumerable.Distinct(itemKey))
@@ -211,7 +213,7 @@ namespace DataEvaluatorX
                 var str = new StringBuilder();
                 str.AppendLine();
                 str.AppendLine("  Total");
-                ColletionsByClassifications.Clear();
+             
                 foreach (var x in ColletionsByClassifications.Keys)
                 {
                     var count = ColletionsByClassifications[x].Count;
