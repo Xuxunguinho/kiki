@@ -211,6 +211,7 @@ namespace DataEvaluatorX
                 var str = new StringBuilder();
                 str.AppendLine();
                 str.AppendLine("  Total");
+                ColletionsByClassifications.Clear();
                 foreach (var x in ColletionsByClassifications.Keys)
                 {
                     var count = ColletionsByClassifications[x].Count;

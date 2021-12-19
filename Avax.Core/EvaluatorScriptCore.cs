@@ -22,7 +22,7 @@ namespace DataEvaluatorX
     internal class EvaluatorScriptCore<T>
     {
         private static Func<IEnumerable<string>, object, object> GetValueFromKey => (key, x) => x.GetDynValue(key);
-      private readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
+        private readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
 
         /// <summary>
         ///  class builder
@@ -70,7 +70,7 @@ namespace DataEvaluatorX
 
 
         public object GetBindValue(string name) => _masterBinder[name];
-       
+
         private object LambdaCompiler(string code)
         {
             var lambda = lizzie.LambdaCompiler.Compile(new EvaluatorScriptCore<T>(), _masterBinder, code);
@@ -80,6 +80,9 @@ namespace DataEvaluatorX
         public void Execute(Dictionary<string, string> classes, Dictionary<string, string> subClasses, string script)
         {
             var dictionary = new Dictionary<string, List<T>>();
+             // clearing data already binded in lizzie
+             SetValueForBind("ratingCollection", dictionary);
+
 
             if (classes?.Keys == null)
                 throw new Exception("as classes de classificação não podem ser nulas ou vazias");
@@ -108,9 +111,13 @@ namespace DataEvaluatorX
                 _masterBinder[symbolName] = data;
                 dictionary.Add(symbolName, data);
             }
+
             SetValueForBind("ratingCollection", dictionary);
-           
+
             var dictionary1 = new Dictionary<string, List<T>>();
+            // clearing data already binded in lizzie
+            SetValueForBind("subCollection", dictionary1);
+            
             if (subClasses?.Keys != null)
                 foreach (var key in subClasses?.Keys)
                 {
@@ -133,13 +140,13 @@ namespace DataEvaluatorX
                 }
 
             SetValueForBind("subCollection", dictionary1);
-            
+
             LambdaCompiler(script);
         }
 
 
         #region extending Lizzie
- 
+
         [lizzie.Bind(Name = "=>")]
         private object Contains(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
@@ -153,7 +160,7 @@ namespace DataEvaluatorX
             {
                 if (!(list is IEnumerable<T> source)) return false;
                 var enumerable = source as T[] ?? source.ToArray();
-              
+
                 return !enumerable.IsNullOrEmpty() &&
                        compList.Any(x => enumerable.Count(z => z.GetDynValue(field).Compare(x.GetDynValue(field))) > 0);
             }
@@ -333,7 +340,7 @@ namespace DataEvaluatorX
             return $"{str} ";
         }
 
-   
+
         [lizzie.Bind(Name = "&")]
         private object And(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
         {
@@ -358,7 +365,7 @@ namespace DataEvaluatorX
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
             return args.Aggregate(false, (current, x) => current || (bool) x);
         }
-       
+
         #endregion
     }
 }
