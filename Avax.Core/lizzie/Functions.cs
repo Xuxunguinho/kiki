@@ -398,8 +398,15 @@ namespace DataEvaluatorX.lizzie
                 throw new LizzieRuntimeException(
                     "The 'if' keyword requires at max 3 arguments, and you tried to invoke it with fewer.");
 
-            if (!(arguments.Get(0) is bool condition))
+            
+            var value = arguments.Get(0) is string[]
+                ? ((object)(binder["$ctxI"] as dynamic)).GetDynRuntimeValue((string[]) arguments.Get(0))
+                : arguments.Get(0);
+            
+            if (!(value is bool condition))
                 throw new LizzieRuntimeException("The 'if' keyword requires a bool in First argument");
+            
+            
             // Retrieving condition, if(true) lambda, and sanity checking invocation.
             if (!(arguments.Get(1) is Function<TContext> lambdaIf))
                 throw new LizzieRuntimeException("The 'if' keyword requires a lambda argument as its second argument.");
@@ -534,6 +541,7 @@ namespace DataEvaluatorX.lizzie
             var value1 = arg1 is string[]
                 ? ((object)(binder["$ctxI"] as dynamic)).GetDynRuntimeValue((string[]) arg1)
                 : arg1;
+            
             var value2 = arg2 is string[]
                 ? ((object)(binder["$ctxI"] as dynamic)).GetDynRuntimeValue((string[]) arg2)
                 : arg2;
