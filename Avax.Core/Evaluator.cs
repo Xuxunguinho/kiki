@@ -136,7 +136,7 @@ namespace DataEvaluatorX
                     var percent = (count * 100) / (double) scount;
 
                     str.AppendLine();
-                    str.AppendLine($"  {x}:{count} -> {percent} %");
+                    str.AppendLine($"  {x}:{count} -> {percent:###.000} %");
                 }
 
                 ResultDescription = str.ToString();
@@ -217,10 +217,10 @@ namespace DataEvaluatorX
                 foreach (var x in ColletionsByClassifications.Keys)
                 {
                     var count = ColletionsByClassifications[x].Count;
-                    var percent = (count * 100) / (double) scount;
+                    var percent = (count * 100) / (double)scount;
 
                     str.AppendLine();
-                    str.AppendLine($"  {x}:{count} -> {percent} %");
+                    str.AppendLine($"  {x}:{count} -> {percent:###.0} %");
                 }
 
                 ResultDescription = str.ToString();
