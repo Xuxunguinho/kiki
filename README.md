@@ -18,7 +18,7 @@ IDE: [Jetbrains Rider](https://www.jetbrains.com/rider/)
 <img src="https://user-images.githubusercontent.com/74734491/148679922-a0d46288-8d51-4748-bb33-96ee759eb7ef.jpg" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679862-8607cc11-3fb7-46eb-8ae0-8be1729406a3.jpg" width="200" height="100" />  <img src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" width="100" height="100" /> 
 
 # Small documentation
-
+basics of how kiki works
 ### kiki's main method
 it is possible that new overloads of this method appear while we are updating and improving the project, after all, the objective is to create a library that can be able to perform data evaluations in different ways.
 
@@ -58,7 +58,7 @@ the above method execute assessment based on subsets extracted from the same dat
 1. **collectionSubclasses** -> *sorted subsets extracted from the context collection 
          (these will not appear described in the 'obsKey' 
          observation as they are only auxiliaries)*
-## Sorted data subsets -> collectionClass,collectionSubclasses (main method parameters)
+### Sorted data subsets -> collectionClass,collectionSubclasses (main method parameters)
 ``` csharp
            CollectionsClass = new Dictionary<string, string>
             {
