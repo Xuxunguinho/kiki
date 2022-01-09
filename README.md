@@ -6,7 +6,7 @@ I initially designed it for academic purposes, but it can be used for various pu
 ### Why 'kiki' ?
 I called the project 'kiki' because it's the name of a good friend I have - practically the only human being with whom I can express what I really feel when it comes to emotions, and also because I developed this project while trying to distract myself so as not to feel missing her while she couldn't be around.
 ### The story behind Kiki
- Working at Qbinary - as one of the **SAPE (School Process Automation System)** developers, we needed something capable of evaluating students based on the **Complex** Angolan **Assessment system** and presenting the results (like knowing if a student passes or fails, if var to appeal or approve with overdue chairs), like any good team, we developed an algorithm capable of doing what we needed, but it was not complete and had some flaws and also whenever it was necessary to make a change to the Assessment system, we had to **recompile the System**; that's why I decided to challenge my brain and develop something that was more **dynamic**, **fast**, **effective**, solving the problems mentioned above.
+Working at Qbinary - as one of the developers of **SAPE (School Process Automation System)**, we needed something capable of assessing students based on Angola's complex **assessment system** (presenting the results like whether a student passes or fails, or approved leaving some subjects to be completed), like any good team, we developed an algorithm capable of doing what we needed, but it was not dynamic and efficient, if we had to make any changes in the Assessment system we would have to recompile the system; so I decided to challenge my brain and develop something that was more **dynamic, fast, effective**, solving the problems mentioned above.
 ### Important :warning:
 Within this project is also [Lizzie](https://github.com/polterguy/lizzie "Lizzie") - is a dynamic scripting language for .Net based upon a design pattern called "Symbolic Delegates". This allows you to execute dynamically created scripts, that does neither compile nor are interpreted, but instead "compiles" directly down to managed CLR delegates. ...it was modified by me to achieve my purposes
 ### Technologies and environments
@@ -19,20 +19,22 @@ IDE: [Jetbrains Rider](https://www.jetbrains.com/rider/)
 
 # Small documentation
 
-
+### kiki's main method
+it is possible that new overloads of this method appear while we are updating and improving the project, after all, the objective is to create a library that can be able to perform data evaluations in different ways.
 
 ```csharp
 public KikiEvaluatorResultMessage Run(IEnumerable<T> source,
-            Expression<Func<T, object>> itemDisplayValue, 
-            Expression<Func<T, object>> itemKey, 
-            Func<T, T,bool> itemKeyDistinct,
-            Expression<Func<T, object>> evalKey, 
-            Expression<Func<T, object>> evalBasedKey,
-            Expression<Func<T, object>> evalBasedKeyDisplayValue,
-            Expression<Func<T, object>> resultKey,
-            Expression<Func<T, object>> obsKey, string script, 
-            Dictionary<string, string> collectionClass,
-            Dictionary<string, string> collectionSubclasses = null)
+                     Expression<Func<T, object>> itemDisplayValue, 
+                     Expression<Func<T, object>> itemKey, 
+                     Func<T, T,bool> itemKeyDistinct,
+                     Expression<Func<T, object>> evalKey, 
+                     Expression<Func<T, object>> evalBasedKey,
+                     Expression<Func<T, object>> evalBasedKeyDisplayValue,
+                     Expression<Func<T, object>> resultKey,
+                     Expression<Func<T, object>> obsKey, 
+                     string script, 
+                     Dictionary<string, string> collectionClass = null,
+                     Dictionary<string, string> collectionSubclasses = null)
 ```
 
 
@@ -41,37 +43,33 @@ the above method execute assessment based on subsets extracted from the same dat
 ### Explaining the parameters of method
 
 1. **source** -> *dataset*
-
 1. **itemDisplayValue** -> *the value to show for each item evaluated, for example,
  the Name of a student when evaluating it*
-
 1. **itemKey** -> *key to identify each entity in the dataset(source) - (context Item)*
-
 1. **itemKeyDistinct** -> *for the where condition, to create the entity's 
  data subset - (Context Collection)*
-
 1. **evalKey** -> *the field to be evaluated*
-
 1. **evalBasedKey** -> *the field on which the rating is based*
-
-1. **evalBasedKeyDisplayValue** -> *value to show in results or statistics for 'evalBasedKey' field*
-         
+1. **evalBasedKeyDisplayValue** -> *value to show in results or statistics for 'evalBasedKey' field*         
 1. **resultKey** -> *the collection field where the result will be assigned*
-
 1. **obsKey** -> *the collection field where the evaluator will assign notes based on the result*
-
 1. **script** -> *the main evaluation script*
-
-1. **collectionClass** -> *sorted subsets extracted from the context collection 
-         (these will appear described in the 'obsKey' observation)*
-
+1. **collectionClass** -> *sorted subsets extracted from the context collection (these will appear described in the 'obsKey' note)*
 1. **collectionSubclasses** -> *sorted subsets extracted from the context collection 
          (these will not appear described in the 'obsKey' 
          observation as they are only auxiliaries)*
-
-
-
-Implementando
+## Sorted data subsets -> collectionClass,collectionSubclasses (main method parameters)
+``` csharp
+           CollectionsClass = new Dictionary<string, string>
+            {
+                {"negativa", "{menorQ(MFD, 8)}"},
+                {"positiva", "{maiorOig(MFD, 10)}"},
+                {"deficiencia", "{&(maiorOig(MFD,8),menorQ(MFD,10))}"}
+            }
+```
+ The dictionary **key** represents the subset name and its **value** must be a Lizzie script as shown above.
+ The expression ```{menorQ(MFD, 8)}``` represents the condition similar to the Where clause in Linq or SQL. all subsets of data must be represented by a similar script as in the code example above.
+# Sample Usage
 ```csharp
 var  evaluator = new kiki.Evaluator<uspCarregarPautaFinalFGParaProcessamentoResult>();
 var message = evaluator.Run(Data, x => x.Nome, x => x.NumSequencia,
