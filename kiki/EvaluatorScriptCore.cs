@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using kiki.lizzie;
 using static kiki.Lex;
 using Arguments = kiki.lizzie.Arguments;
 using LizzieException = kiki.lizzie.exceptions.LizzieException;
@@ -33,10 +34,21 @@ namespace kiki
             lizzie.LambdaCompiler.BindFunctions(_masterBinder);
 
 
+            //Extending Lizzie with new functions
+            _masterBinder["$R->"] = ResultSetter;
+            _masterBinder["!=>"] = NotContains;
+            _masterBinder["=>"] = Contains;
+            // portuguese
+            _masterBinder["somaT"] = Summation;
+            // english
+            _masterBinder["or"] = Or;
+            _masterBinder["&"] = And;
+            // portuguese
+            _masterBinder["ou"] = Or;
+
+            //initializing new reserved fields for Lizzie
             AddBind("$result", new string[] { });
             AddBind("$obs", new string[] { });
-
-            AddBind("evalKey", new string[] { });
             AddBind("evalKeyDisplayValue", new string[] { });
             AddBind("evalBasedKey", new string[] { });
             AddBind("evalBasedKeyDisplayValue", new string[] { });
@@ -80,8 +92,8 @@ namespace kiki
         public void Execute(Dictionary<string, string> classes, Dictionary<string, string> subClasses, string script)
         {
             var dictionary = new Dictionary<string, List<T>>();
-             // clearing data already binded in lizzie
-             SetValueForBind("ratingCollection", dictionary);
+            // clearing data already binded in lizzie
+            SetValueForBind("ratingCollection", dictionary);
 
 
             if (classes?.Keys == null)
@@ -117,7 +129,7 @@ namespace kiki
             var dictionary1 = new Dictionary<string, List<T>>();
             // clearing data already binded in lizzie
             SetValueForBind("subCollection", dictionary1);
-            
+
             if (subClasses?.Keys != null)
                 foreach (var key in subClasses?.Keys)
                 {
@@ -144,11 +156,9 @@ namespace kiki
             LambdaCompiler(script);
         }
 
-
         #region extending Lizzie
 
-        [lizzie.Bind(Name = "=>")]
-        private object Contains(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        private Function<EvaluatorScriptCore<T>> Contains => (ctx, binder, args) =>
         {
             if (args.Count != 3)
                 throw new LizzieException("o metodo não pode conter mais  nem menos do que 2 argumento");
@@ -192,7 +202,7 @@ namespace kiki
                 if (enumerable.IsNullOrEmpty()) return false;
                 return !(equate is null) && equate.Any(x => enumerable.Count(z => z.GetDynValue(field).Compare(x)) > 0);
             }
-        }
+        };
 
         /// <summary>
         /// 
@@ -201,8 +211,8 @@ namespace kiki
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="LizzieException"></exception>
-        [lizzie.Bind(Name = "!=>")]
-        private object NotContains(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+
+        public Function<EvaluatorScriptCore<T>> NotContains => (ctx, binder, args) =>
         {
             if (args.IsNullOrEmpty()) return true;
             if (args.Count != 3)
@@ -273,10 +283,10 @@ namespace kiki
                 return (listR.Contains(true) && !listR.Contains(false)) ||
                        (!listR.Contains(true) && listR.Contains(false));
             }
-        }
+        };
 
-        [lizzie.Bind(Name = "$R->")]
-        private object Result(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+
+        private static Function<EvaluatorScriptCore<T>> ResultSetter => (ctx, binder, args) =>
         {
             try
             {
@@ -310,13 +320,13 @@ namespace kiki
                         var collection = storedData[key];
                         var colet = StrBuilder(collection, keyValue, basedKeyDisplayValue);
                         obs.AppendLine($"    {key} -> {collection.Count}");
-                        if(!colet.IsNullOrEmpty())
+                        if (!colet.IsNullOrEmpty())
                             obs.AppendLine($"    {colet}");
                         obs.AppendLine("");
                     }
 
                 obs.AppendLine();
-                contextCollection.Update(p =>
+                contextCollection?.Update(p =>
                 {
                     p.SetDynValue(obs.ToString(), exprObs);
                     p.SetDynValue(result, exprResult);
@@ -328,22 +338,21 @@ namespace kiki
             {
                 throw new Exception(e.Message);
             }
-        }
+        };
 
         private static string StrBuilder(IEnumerable<T> collection, IEnumerable<string> key,
             IEnumerable<string> basedKeyDisplayValue)
         {
             var str = collection.Aggregate(string.Empty,
                 (current, x) => (current.IsNullOrEmpty() ? current : current + ", ") +
-                                x.GetDynValue(basedKeyDisplayValue) + $"({(double)GetValueFromKey(key, x):#.0})");
+                                x.GetDynValue(basedKeyDisplayValue) + $"({(double) GetValueFromKey(key, x):#.0})");
 
             Console.WriteLine(str);
             return $"{str} ";
         }
 
 
-        [lizzie.Bind(Name = "&")]
-        private object And(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
+        private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
@@ -357,26 +366,31 @@ namespace kiki
                         throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
 
             return (args.Contains(true) && !args.Contains(false));
-        }
+        };
 
-        [lizzie.Bind(Name = "somaT")]
-        private object Somatorio(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
-        {  
-            
+        private Function<EvaluatorScriptCore<T>> Or => (ctx, binder, args) =>
+        {
+            if (args.Count < 2)
+                throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
+            return args.Aggregate(false, (current, x) => current || (bool) x);
+        };
+
+        private Function<EvaluatorScriptCore<T>> Summation => (ctx, binder, args) =>
+        {
             var equate = args as IEnumerable<object>;
             var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
             if (args.Count == 1)
             {
-                 var arg1 = objects[0];
-                 var contextCollection = binder["$ctxC"] as List<T>;
-                 double soma = 0;
+                var arg1 = objects[0];
+                var contextCollection = binder["$ctxC"] as List<T>;
+                double soma = 0;
                 var contextItem = binder["$ctxI"].Cast<T>();
 
                 if (!(arg1 is string[] field)) return soma;
                 var value = GetFieldTypeNew<T>(field);
-                if(value.IsNumber())
-                    soma = contextCollection?.Sum(x =>  x.GetDynValue(field).ToString().ToDouble()) ?? 0;
-                else 
+                if (value.IsNumber())
+                    soma = contextCollection?.Sum(x => x.GetDynValue(field).ToString().ToDouble()) ?? 0;
+                else
                     throw new LizzieException("Só podem ser somados campos do tipo numérico!");
                 return soma;
             }
@@ -394,18 +408,10 @@ namespace kiki
                 if (!(arg2 is string[] field))
                     throw new LizzieException(
                         "O segundo argumento da função [  somaT(list,campo) ] tem de ser um campo da conjunto!");
-                soma = collection?.Sum(x =>  x.GetDynValue(field).ToString().ToDouble()) ?? 0;
+                soma = collection?.Sum(x => x.GetDynValue(field).ToString().ToDouble()) ?? 0;
                 return soma;
             }
-
-        }
-        [lizzie.Bind(Name = "ou")]
-        private object Or(lizzie.Binder<EvaluatorScriptCore<T>> binder, Arguments args)
-        {
-            if (args.Count < 2)
-                throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
-            return args.Aggregate(false, (current, x) => current || (bool) x);
-        }
+        };
 
         #endregion
     }

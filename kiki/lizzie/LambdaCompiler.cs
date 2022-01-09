@@ -90,88 +90,98 @@ namespace kiki.lizzie
             binder["var"] = Functions<TContext>.Var;
             binder["set"] = Functions<TContext>.Set;
 
-            // Comparison functions.
+            // Comparison functions. english
             binder["if"] = Functions<TContext>.If;
-            binder["se"] = Functions<TContext>.If;
             binder["eq"] = Functions<TContext>.Eq;
-            binder["igual"] = Functions<TContext>.Eq;
             binder["mt"] = Functions<TContext>.Mt;
-            binder["maiorQ"] = Functions<TContext>.Mt;
             binder["lt"] = Functions<TContext>.Lt;
-            binder["menorQ"] = Functions<TContext>.Lt;
             binder["mte"] = Functions<TContext>.Mte;
-            binder["maiorOig"] = Functions<TContext>.Mte;
             binder["lte"] = Functions<TContext>.Lte;
-            binder["menorOig"] = Functions<TContext>.Lte;
             binder["not"] = Functions<TContext>.Not;
+            // Comparison functions. Portuguese
+            binder["menorOig"] = Functions<TContext>.Lte;
             binder["nao"] = Functions<TContext>.Not;
+            binder["maiorOig"] = Functions<TContext>.Mte;
+            binder["maiorQ"] = Functions<TContext>.Mt;
+            binder["menorQ"] = Functions<TContext>.Lt;
+            binder["igual"] = Functions<TContext>.Eq;
+            binder["se"] = Functions<TContext>.If;
 
-            // Enumerable
-            
-            // Boolean algebraic functions.
+            // Boolean algebraic functions. English
             binder["any"] = Functions<TContext>.Any;
-            binder["qualquer"] = Functions<TContext>.Any;
             binder["all"] = Functions<TContext>.All;
+         
+            // Boolean algebraic functions. Portuguese
+            binder["qualquer"] = Functions<TContext>.Any;
             binder["todos"] = Functions<TContext>.All;
-            // Function functions.
+            
+            // Function functions. English
             binder["function"] = Functions<TContext>.Function;
-            binder["funcao"] = Functions<TContext>.Function;
             binder["apply"] = Functions<TContext>.Apply;
-
+            // Function functions. English
+            binder["funcao"] = Functions<TContext>.Function;
+            
             // List functions,
             binder["list"] = Functions<TContext>.List;
-            binder["lista"] = Functions<TContext>.List;
             binder["slice"] = Functions<TContext>.Slice;
-
+            // List functions. Portuguese
+            binder["lista"] = Functions<TContext>.List;
+            
             // Map functions,
             binder["map"] = Functions<TContext>.Map;
+            // Map functions. Portuguese
             binder["mapa"] = Functions<TContext>.Map;
 
             // Common functions for map and list.
             binder["get"] = Functions<TContext>.Get;
-            binder["pega"] = Functions<TContext>.Get;
             binder["count"] = Functions<TContext>.Count;
-            binder["conta"] = Functions<TContext>.Count;
             binder["add"] = Functions<TContext>.AddValue;
             binder["each"] = Functions<TContext>.Each;
+            // Common functions for map and list. Portuguese
+            binder["pega"] = Functions<TContext>.Get;
+            binder["conta"] = Functions<TContext>.Count;
             binder["cada"] = Functions<TContext>.Each;
-
+            
             // Conversion functions.
             binder["string"] = Functions<TContext>.String;
-            binder["literal"] = Functions<TContext>.String;
             binder["number"] = Functions<TContext>.Number;
+          
+            // Conversion functions. Portuguese
             binder["numero"] = Functions<TContext>.Number;
+            binder["literal"] = Functions<TContext>.String;
             // binder["json"] = Functions<TContext>.Json;
 
             // Math functions.
-
             binder["+"] = Functions<TContext>.Add;
-            binder["soma"] = Functions<TContext>.Add;
             binder["-"] = Functions<TContext>.Subtract;
-            binder["subtrai"] = Functions<TContext>.Subtract;
             binder["*"] = Functions<TContext>.Multiply;
-            binder["multiplica"] = Functions<TContext>.Multiply;
             binder["/"] = Functions<TContext>.Divide;
-            binder["divide"] = Functions<TContext>.Divide;
             binder["%"] = Functions<TContext>.Modulo;
+            // Math functions. Literal in Portuguese
             binder["modulo"] = Functions<TContext>.Modulo;
-
-
+            binder["divide"] = Functions<TContext>.Divide;
+            binder["soma"] = Functions<TContext>.Add;
+            binder["subtrai"] = Functions<TContext>.Subtract;
+            binder["multiplica"] = Functions<TContext>.Multiply;
+           
             // other 
 
             binder["write"] = Functions<TContext>.Write;
+            //Portuguese
             binder["escreva"] = Functions<TContext>.Write;
             // String functions.
             binder["substr"] = Functions<TContext>.Substr;
             binder["length"] = Functions<TContext>.Length;
-            binder["tamanho"] = Functions<TContext>.Length;
             binder["replace"] = Functions<TContext>.Replace;
-
+            // String functions. Portuguese
+            binder["tamanho"] = Functions<TContext>.Length;
+           
             // The eval function.
             binder["eval"] = Functions<TContext>.Eval;
 
             // Null is simply a constant yielding null.
             binder["null"] = null;
+            // Null is simply a constant yielding null. Portuguese
             binder["nulo"] = null;
         }
 
