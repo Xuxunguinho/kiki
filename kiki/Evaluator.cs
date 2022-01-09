@@ -29,12 +29,12 @@ namespace kiki
 
         public virtual void OnAfterAvail(object sender, EvaluatorXTrigger<T> e)
         {
-            // execute aqui o codigo para antes de Inserir o Item [e.Inserted] 
+            // execute aqui o codigo depois  de avaliar 
         }
 
         public virtual void OnBeforeAvail(object sender, EvaluatorXTrigger<T> e)
         {
-            // execute aqui o codigo para antes de Inserir o Item [e.Inserted] 
+            // execute aqui o codigo para antes de avaliar
         }
 
         public Evaluator()
@@ -48,8 +48,6 @@ namespace kiki
             {
                 if (x.GetChildProperties()?.Count > 1)
                 {
-                    // list.Add(x.Name);
-                    // list.AddRange(from PropertyDescriptor z in x.GetChildProperties() select z.Name);
                     foreach (PropertyDescriptor z in x.GetChildProperties())
                     {
                         _evaluatorScriptCore.AddBind($"{x.Name}_{z.Name}", new[] {x.Name, z.Name});
@@ -64,7 +62,23 @@ namespace kiki
             }
         }
 
-        public EvaluatorResultMessage Run(IEnumerable<T> source,
+        /// <summary>
+        /// Run assessment based on subsets extracted from the same dataset 'source'
+        /// </summary>
+        /// <param name="source">dataset</param>
+        /// <param name="itemDisplayValue">the value to show for each item evaluated, for example, the Name of a student when evaluating it</param>
+        /// <param name="itemKey">key to identify each entity in the dataset(source) -> (context Item)</param>
+        /// <param name="itemKeyDistinct">for the where condition, to create the entity's data subset -> (Context Collection)</param>
+        /// <param name="evalKey">the field to be evaluated</param>
+        /// <param name="evalBasedKey">the field on which the rating is based</param>
+        /// <param name="evalBasedKeyDisplayValue">value to show in results or statistics for 'evalBasedKey' field</param>
+        /// <param name="resultKey">the collection field where the result will be assigned</param>
+        /// <param name="obsKey">the collection field where the evaluator will assign notes based on the result</param>
+        /// <param name="script">the main evaluation script</param>
+        /// <param name="collectionClass">sorted subsets extracted from the context collection (these will appear described in the 'obsKey' observation)</param>
+        /// <param name="collectionSubclasses">sorted subsets extracted from the context collection (these will not appear described in the 'obsKey' observation as they are only auxiliaries)</param>
+        /// <returns>EvaluatorResultMessage</returns>
+        public KikiEvaluatorResultMessage Run(IEnumerable<T> source,
             Expression<Func<T, object>> itemDisplayValue, Expression<Func<T, object>> itemKey, Func<T, T,
                 bool> itemKeyDistinct, Expression<Func<T, object>> evalKey, Expression<Func<T, object>> evalBasedKey,
             Expression<Func<T, object>> evalBasedKeyDisplayValue, Expression<Func<T, object>> resultKey,
@@ -73,11 +87,9 @@ namespace kiki
         {
             try
             {
-                
-                
                 _collectionClass = collectionClass;
                 _script = script;
-     
+
                 var stow = new Stopwatch();
                 stow.Start();
 
@@ -120,10 +132,11 @@ namespace kiki
                     if (ColletionsByClassifications.ContainsKey(ctxItem.GetDynValue(exprResult).ToString()))
                         ColletionsByClassifications[ctxItem.GetDynValue(exprResult).ToString()].Add(ctxItem);
                     else
-                        ColletionsByClassifications.Add(ctxItem.GetDynValue(exprResult).ToString(), new List<T> {ctxItem});
+                        ColletionsByClassifications.Add(ctxItem.GetDynValue(exprResult).ToString(),
+                            new List<T> {ctxItem});
 
                     OnAfterAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
-                    // helper.Run(_script);
+                  
                 }
 
 
@@ -151,15 +164,15 @@ namespace kiki
                     $"Executado com sucesso em {TimeSpan.FromMilliseconds(stow.ElapsedMilliseconds).TotalSeconds} segundos");
                 var message = msgBuilder.ToString();
 
-                return  new EvaluatorResultMessage(message,Enums.EvaluatorMessageType.Success);
+                return new KikiEvaluatorResultMessage(message, KikiEvaluatorMessageType.Success);
             }
             catch (TargetInvocationException e)
             {
-                return new EvaluatorResultMessage(e.Message,Enums.EvaluatorMessageType.Error);
+                return new KikiEvaluatorResultMessage(e.Message, KikiEvaluatorMessageType.Error);
             }
             catch (Exception e)
             {
-                return new EvaluatorResultMessage(e.Message,Enums.EvaluatorMessageType.Error);
+                return new KikiEvaluatorResultMessage(e.Message, KikiEvaluatorMessageType.Error);
             }
         }
 
@@ -213,11 +226,11 @@ namespace kiki
                 var str = new StringBuilder();
                 str.AppendLine();
                 str.AppendLine("  Total");
-             
+
                 foreach (var x in ColletionsByClassifications.Keys)
                 {
                     var count = ColletionsByClassifications[x].Count;
-                    var percent = (count * 100) / (double)scount;
+                    var percent = (count * 100) / (double) scount;
 
                     str.AppendLine();
                     str.AppendLine($"  {x}:{count} -> {percent:###.0} %");

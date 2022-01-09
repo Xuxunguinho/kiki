@@ -1,12 +1,11 @@
 ﻿namespace kiki
 {
-    public class Enums
-    {
-        public enum EvaluatorMessageType
+ 
+        public enum KikiEvaluatorMessageType
         {
             Error = 0,
             Success = 1,
             Warning = 2
         }
-    }
+ 
 }
