@@ -16,4 +16,67 @@ This project uses the .Net Standard 2.0 Framework
 IDE: [Jetbrains Rider](https://www.jetbrains.com/rider/)
 
 <img src="https://user-images.githubusercontent.com/74734491/148679922-a0d46288-8d51-4748-bb33-96ee759eb7ef.jpg" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679862-8607cc11-3fb7-46eb-8ae0-8be1729406a3.jpg" width="200" height="100" />  <img src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" width="100" height="100" /> 
-# Get started
+
+# Small documentation
+
+
+
+```csharp
+public KikiEvaluatorResultMessage Run(IEnumerable<T> source,
+            Expression<Func<T, object>> itemDisplayValue, 
+            Expression<Func<T, object>> itemKey, 
+            Func<T, T,bool> itemKeyDistinct,
+            Expression<Func<T, object>> evalKey, 
+            Expression<Func<T, object>> evalBasedKey,
+            Expression<Func<T, object>> evalBasedKeyDisplayValue,
+            Expression<Func<T, object>> resultKey,
+            Expression<Func<T, object>> obsKey, string script, 
+            Dictionary<string, string> collectionClass,
+            Dictionary<string, string> collectionSubclasses = null)
+```
+
+
+the above method execute assessment based on subsets extracted from the same dataset 'source'
+
+### Explaining the parameters of method
+
+1. **source** -> *dataset*
+
+1. **itemDisplayValue** -> *the value to show for each item evaluated, for example,
+ the Name of a student when evaluating it*
+
+1. **itemKey** -> *key to identify each entity in the dataset(source) - (context Item)*
+
+1. **itemKeyDistinct** -> *for the where condition, to create the entity's 
+ data subset - (Context Collection)*
+
+1. **evalKey** -> *the field to be evaluated*
+
+1. **evalBasedKey** -> *the field on which the rating is based*
+
+1. **evalBasedKeyDisplayValue** -> *value to show in results or statistics for 'evalBasedKey' field*
+         
+1. **resultKey** -> *the collection field where the result will be assigned*
+
+1. **obsKey** -> *the collection field where the evaluator will assign notes based on the result*
+
+1. **script** -> *the main evaluation script*
+
+1. **collectionClass** -> *sorted subsets extracted from the context collection 
+         (these will appear described in the 'obsKey' observation)*
+
+1. **collectionSubclasses** -> *sorted subsets extracted from the context collection 
+         (these will not appear described in the 'obsKey' 
+         observation as they are only auxiliaries)*
+
+
+
+Implementando
+```csharp
+var  evaluator = new kiki.Evaluator<uspCarregarPautaFinalFGParaProcessamentoResult>();
+var message = evaluator.Run(Data, x => x.Nome, x => x.NumSequencia,
+                    (t1, t2) => t1.NumSequencia == t2.NumSequencia, x => x.MFD, x => x.IdDisciplina, x => x.Disciplina,
+                    x => x.Resultado, x => x.Observacao, script,
+                    classes, subClass);
+```
+### 
