@@ -1,5 +1,5 @@
 
-# kiki
+# kiki  - A generic system for evaluating Data
  A generic system for evaluating and classifying data into enumerators (IEnummerable's) where their classification terms and conditions can be dynamically scripted.
 
 I initially designed it for academic purposes, but it can be used for various purposes.
@@ -16,3 +16,4 @@ This project uses the .Net Standard 2.0 Framework
 IDE: [Jetbrains Rider](https://www.jetbrains.com/rider/)
 
 <img src="https://user-images.githubusercontent.com/74734491/148679922-a0d46288-8d51-4748-bb33-96ee759eb7ef.jpg" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679862-8607cc11-3fb7-46eb-8ae0-8be1729406a3.jpg" width="200" height="100" />  <img src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" width="100" height="100" /> 
+# Get started
