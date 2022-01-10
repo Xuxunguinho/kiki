@@ -4,8 +4,8 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>kiki</RootNamespace>
     <Company>https://github.com/Xuxunguinho</Company>
-    <AssemblyVersion>0.1.1</AssemblyVersion>
-    <FileVersion>0.1.1</FileVersion>
+    <AssemblyVersion>0.1.2</AssemblyVersion>
+    <FileVersion>0.1.2</FileVersion>
     <AssemblyName>kiki</AssemblyName>
     <Product>kiki</Product>
   </PropertyGroup>
