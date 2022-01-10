@@ -6,7 +6,7 @@ env:
     PROJECT_PATH: 'kiki/kiki.csproj'
     PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
     NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
-    KIKI_VERSION: '0.1.2'
+    #KIKI_VERSION: '0.1.2'
     
 # Controls when the workflow will run
 on:
