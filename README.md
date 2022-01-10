@@ -45,9 +45,9 @@ the above method execute assessment based on subsets extracted from the same dat
 1. **source** -> *dataset*
 1. **itemDisplayValue** -> *the value to show for each item evaluated, for example,
  the Name of a student when evaluating it*
-1. **itemKey** -> *key to identify each entity in the dataset(source) - (context Item)*
+1. **itemKey** -> *key to identify each entity in the dataset(source) - (**contextItem**)*
 1. **itemKeyDistinct** -> *for the where condition, to create the entity's 
- data subset - (Context Collection)*
+ data subset - (**Context Collection**)*
 1. **evalKey** -> *the field to be evaluated*
 1. **evalBasedKey** -> *the field on which the rating is based*
 1. **evalBasedKeyDisplayValue** -> *value to show in results or statistics for 'evalBasedKey' field*         
@@ -58,6 +58,11 @@ the above method execute assessment based on subsets extracted from the same dat
 1. **collectionSubclasses** -> *sorted subsets extracted from the context collection 
          (these will not appear described in the 'obsKey' 
          observation as they are only auxiliaries)*
+         
+## kiki Script
+As I explained before kiki uses the scripting language [Lizzie](https://github.com/polterguy/lizzie "Lizzie") as, so its syntax is based on Lizzie. so far we have also added the systaxis language for portuguese.
+
+As we will show below, the main method uses script coming from the sorted data subsets (they are used to create the subsets) and also the main script (runs the evaluation as a whole)
 ### Sorted data subsets -> collectionClass,collectionSubclasses (main method parameters)
 ``` csharp
            CollectionsClass = new Dictionary<string, string>
@@ -68,13 +73,42 @@ the above method execute assessment based on subsets extracted from the same dat
             }
 ```
  The dictionary **key** represents the subset name and its **value** must be a Lizzie script as shown above.
- The expression ```{menorQ(MFD, 8)}``` represents the condition similar to the Where clause in Linq or SQL. all subsets of data must be represented by a similar script as in the code example above.
+ The expression ```{menorQ(MFD, 8)}``` represents the condition similar to the **Where clause in Linq or SQL**. all subsets of data must be represented by a similar script as in the code example above.
+
+
+### Main Script
+``` csharp
+se(maiorQ(somaT(FaltasNaoJustificadas),5), {$R->('Reprovado F')},
+{ 
+    se(&(igual(conta(negativas),0),igual(conta(deficiencias),0)),
+    {
+            se(Ajudado,{$R->('Aprovado A')},{$R->('Aprovado')})
+    },
+    {
+       /* verificando*/
+       se(&(igual(conta(negativas),0), menorOig(conta(deficiencias),2),
+       !=> (deficiencias,disciplinas_xaves,IdDisciplina)),
+                {
+                  $R->('Recurso')
+                }
+               ,{
+                   $R->('Reprovado')
+                })
+    })
+
+})
+```
+
 # Sample Usage
 ```csharp
 var  evaluator = new kiki.Evaluator<uspCarregarPautaFinalFGParaProcessamentoResult>();
-var message = evaluator.Run(Data, x => x.Nome, x => x.NumSequencia,
-                    (t1, t2) => t1.NumSequencia == t2.NumSequencia, x => x.MFD, x => x.IdDisciplina, x => x.Disciplina,
-                    x => x.Resultado, x => x.Observacao, script,
+var message = evaluator.Run(Data, x => x.Nome,
+                     x => x.NumSequencia,
+                    (t1, t2) => t1.NumSequencia == t2.NumSequencia,
+                    x => x.MFD, x => x.IdDisciplina,
+                    x => x.Disciplina,
+                    x => x.Resultado, x => x.Observacao,
+                    mainScript,
                     classes, subClass);
 ```
 ### 
