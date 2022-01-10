@@ -7,7 +7,8 @@
     <AssemblyVersion>0.1.1</AssemblyVersion>
     <FileVersion>0.1.1</FileVersion>
     <AssemblyName>kiki</AssemblyName>
-    <Product>DataEvaluatorX</Product>
+    <Product>kiki</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +16,7 @@
     <Compile Include="obj\Debug\TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs" />
     <Compile Include="obj\Debug\TemporaryGeneratedFile_5937a670-0e60-4077-877b-f7221da3dda1.cs" />
     <Compile Include="obj\Debug\TemporaryGeneratedFile_E7A71F73-0F8D-4B9B-B56E-8E70B10BC5D3.cs" />
+    <Compile Remove=".github\**" />
   
     <Compile Remove="obj\**" />
   
@@ -26,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup> 
-    <Content Include=".github\workflows\nuget.yml" /> 
     <Content Include="obj\project.assets.json" />
   </ItemGroup>
 
@@ -37,6 +38,7 @@
  
 
   <ItemGroup>
+    <EmbeddedResource Remove=".github\**" />
     <EmbeddedResource Remove="NoSQLData_Examples\**" />
     <EmbeddedResource Remove="SQLData\**" />
   </ItemGroup>
@@ -44,6 +46,7 @@
  
 
   <ItemGroup>
+    <None Remove=".github\**" />
     <None Remove="NoSQLData_Examples\**" />
     <None Remove="SQLData\**" />
   </ItemGroup>
