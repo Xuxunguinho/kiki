@@ -24,7 +24,7 @@ namespace kiki
         private EvaluatorScriptCore<T> _evaluatorScriptCore;
         private readonly EventHandler<EvaluatorXTrigger<T>> _afterAvail;
         private readonly EventHandler<EvaluatorXTrigger<T>> _beforeAvail;
-        public List<string> Fields;
+        public readonly List<string> Fields;
         public string ResultDescription { get; set; }
 
         public virtual void OnAfterAvail(object sender, EvaluatorXTrigger<T> e)
@@ -129,10 +129,10 @@ namespace kiki
 
 
                     // Make collections based on results
-                    if (ColletionsByClassifications.ContainsKey(ctxItem.GetDynValue(exprResult).ToString()))
-                        ColletionsByClassifications[ctxItem.GetDynValue(exprResult).ToString()].Add(ctxItem);
+                    if (ColletionsByClassifications.ContainsKey(ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty))
+                        ColletionsByClassifications[ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty].Add(ctxItem);
                     else
-                        ColletionsByClassifications.Add(ctxItem.GetDynValue(exprResult).ToString(),
+                        ColletionsByClassifications.Add(ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty,
                             new List<T> {ctxItem});
 
                     OnAfterAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
@@ -212,10 +212,10 @@ namespace kiki
                     var exprResult = _evaluatorScriptCore.GetBindValue("resultKey") as string[];
 
                     // Make collections based on results
-                    if (ColletionsByClassifications.ContainsKey(s.GetDynValue(exprResult).ToString()))
-                        ColletionsByClassifications[s.GetDynValue(exprResult).ToString()].Add(s);
+                    if (ColletionsByClassifications.ContainsKey(s.GetDynValue(exprResult).ToString() ?? string.Empty))
+                        ColletionsByClassifications[s.GetDynValue(exprResult).ToString() ?? string.Empty].Add(s);
                     else
-                        ColletionsByClassifications.Add(s.GetDynValue(exprResult).ToString(), new List<T> {s});
+                        ColletionsByClassifications.Add(s.GetDynValue(exprResult).ToString() ?? string.Empty, new List<T> {s});
 
                     OnAfterAvail(this, new EvaluatorXTrigger<T>(s, av));
                     // helper.Run(_script);
@@ -240,9 +240,8 @@ namespace kiki
 
 
                 stow.Stop();
-                var message = $"The results were presented in -> {new TimeSpan(stow.ElapsedMilliseconds).Milliseconds}";
 
-                message = "Success";
+                const string message = "Success";
 
                 return message;
             }
