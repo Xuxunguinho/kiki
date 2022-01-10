@@ -186,11 +186,10 @@ namespace kiki
             {
                 _collectionClass = collectionClass;
                 _script = script;
-#if DEBUG
 
                 var stow = new Stopwatch();
                 stow.Start();
-#endif
+
                 // expressions
                 var enumerable1 = source as T[] ?? source.ToArray();
                 var scount = enumerable1?.Distinct(itemKey).Count();
