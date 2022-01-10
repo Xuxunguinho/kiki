@@ -41,7 +41,7 @@ jobs:
         run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
     
     
-      -  id: get_version
+      -  name: get_version
          uses: battila7/get-version-action@v2
         
       -  run: echo ${{ steps.get_version.outputs.version }}
