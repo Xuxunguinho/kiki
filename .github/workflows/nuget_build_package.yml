@@ -3,9 +3,10 @@
 name: Deploy Nuget Package
 
 env: 
-    PROJECT_PATH: kiki/kiki/kiki.csproj
+    PROJECT_PATH: 'kiki/kiki.csproj'
     PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
-    NUGET_SOURCE_URL: https://api.nuget.org/v3/index.json
+    NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
+    KIKI_VERSION: '0.1.1'
     
 # Controls when the workflow will run
 on:
@@ -38,16 +39,13 @@ jobs:
         run: dotnet restore ${{ env.PROJECT_PATH }}
      
       - name: Build Project
-        run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
-    
-    
-      -  name: get_version
-         uses: battila7/get-version-action@v2
-        
-      -  run: echo ${{ steps.get_version.outputs.version }}
-    
-      - name: Pack project
-        run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release   
+      - name: 'Get Version'
+        id: version
+        uses: battila7/get-version-action@v2
+
+      - name: 'Pack project'
+        run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ env.KIKI_VERSION }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
      
       - name: Push package
         run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_KEY }} -s ${{ env.NUGET_SOURCE_URL }}
