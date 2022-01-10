@@ -41,6 +41,7 @@ namespace kiki
             // portuguese
             _masterBinder["somaT"] = Summation;
             // english
+            _masterBinder["sumT"] = Summation;
             _masterBinder["or"] = Or;
             _masterBinder["&"] = And;
             // portuguese
@@ -312,8 +313,6 @@ namespace kiki
 
                 obs.Clear();
                 obs.AppendLine();
-                obs.AppendLine($"    Resultado -> {result}");
-                obs.AppendLine();
                 if (storedData != null)
                     foreach (var key in storedData.Keys)
                     {
@@ -347,7 +346,7 @@ namespace kiki
                 (current, x) => (current.IsNullOrEmpty() ? current : current + ", ") +
                                 x.GetDynValue(basedKeyDisplayValue) + $"({(double) GetValueFromKey(key, x):#.0})");
 
-            Console.WriteLine(str);
+        
             return $"{str} ";
         }
 
