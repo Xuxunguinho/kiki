@@ -32,7 +32,7 @@ jobs:
       uses: battila7/get-version-action@v2
       
     - name: "create package"
-      run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build -c Release --include-symbols -p:PackageVersion=${{ steps.kikiversion.outputs.version-without-v }} -o out
+      run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build -c Release --include-symbols -p:PackageVersion=${{ '0.1.6' }} -o out
    
     - name: Test
       run: dotnet test --no-build --verbosity normal
