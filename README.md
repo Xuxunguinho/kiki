@@ -59,56 +59,105 @@ the above method execute assessment based on subsets extracted from the same dat
          (these will not appear described in the 'obsKey' 
          observation as they are only auxiliaries)*
          
-## kiki Script
+## kiki Script and Sample Usage
 As I explained before kiki uses the scripting language [Lizzie](https://github.com/polterguy/lizzie "Lizzie") as, so its syntax is based on Lizzie. so far we have also added the systaxis language for portuguese.
 
 As we will show below, the main method uses script coming from the sorted data subsets (they are used to create the subsets) and also the main script (runs the evaluation as a whole)
-### Sorted data subsets -> collectionClass,collectionSubclasses (main method parameters)
+
+For better understanding, below I will present practical examples and I will also leave the Link to the Demo repository in question.
+
+***Note***: *for the example, let's consider **a software development company that is hiring Developers**,
+these developers are evaluated based on some areas of knowledge such as: programming language skills, platform skills, and framework skills.*
+
+### The generic object that we are going to use for the example
+***Note***: *All **property fields** of our generic **object** can be used within our script to return their values... you can see this in the examples below*
 ``` csharp
-           CollectionsClass = new Dictionary<string, string>
-            {
-                {"negativa", "{menorQ(MFD, 8)}"},
-                {"positiva", "{maiorOig(MFD, 10)}"},
-                {"deficiencia", "{&(maiorOig(MFD,8),menorQ(MFD,10))}"}
-            }
+public class  SoftwareDeveloperJobApplication
+        {
+            public int  CandidateId { get; set; }           
+            public string CandidateName { get; set; }
+           
+            public int SubjectId { get; set; }            
+            public string SubjectName { get; set; }          
+            
+            public int SubjectCategoryId{ get; set; }
+            public string SubjectCategoryName{ get; set; }
+            
+            public int ContributionsOnGithub { get; set; } = 0;
+            public double  TestGrade { get; set; }
+            
+            public bool Helped { get; set; } = false;
+            public string Obs { get; set; } = string.Empty;
+            public string Result { get; set; }
+        }
+}
 ```
- The dictionary **key** represents the subset name and its **value** must be a Lizzie script as shown above.
- The expression ```{menorQ(MFD, 8)}``` represents the condition similar to the **Where clause in Linq or SQL**. all subsets of data must be represented by a similar script as in the code example above.
 
+### Sorted data subsets 
+- ***collectionClass*** (main method parameters)
+``` csharp
+        private static readonly Dictionary<string, string> SortedSubsets = new()
+        {
+            //considering negative grades all those 'lower than' 8 values
+            {"negativeGrade", "{lt(TestGrade, 8)}"},
+            //considering positive grades all those 'greater than'10 values
+            {"positiveGrade", "{mte(TestGrade, 10)}"},
+            //considering deficient grades all those 'greater than or equal' to 8 and 'less than' 10 values
+            {"deficiencyGrade", "{&(mte(TestGrade,8),lt(TestGrade,10))}"}
+        };
+```
+The dictionary **key** represents the subset name and its **value** must be a Lizzie script as shown above.
+The expression ```{lt(TestGrade, 8)}``` represents the condition similar to the **Where clause in Linq or SQL**. all subsets of data must be represented by a similar script as in the code example above.
+ 
+- ***collectionSubclasses*** (main method parameters)
+``` csharp
+        private static readonly Dictionary<string, string> AuxilarSortedSubsets = new()
+        {
+            //considering 'Csharp' and 'Javascript' as the most important subjects
+            //(I will use it in the script to help me find candidates who have
+            //no negative or deficiency in this subject)
+            {"mostImportant", "{or(eq(SubjectName,'Csharp'),eq(SubjectName,'Javascript'))}"},
 
+        };
+```
 ### Main Script
+It is in the main script where we write all the evaluation rule
+
 ``` csharp
-se(maiorQ(somaT(FaltasNaoJustificadas),5), {$R->('Reprovado F')},
-{ 
-    se(&(igual(conta(negativas),0),igual(conta(deficiencias),0)),
-    {
-            se(Ajudado,{$R->('Aprovado A')},{$R->('Aprovado')})
-    },
-    {
-       /* verificando*/
-       se(&(igual(conta(negativas),0), menorOig(conta(deficiencias),2),
-       !=> (deficiencias,disciplinas_xaves,IdDisciplina)),
+if(lt(sumT(ContributionsOnGithub),1000), {$R->('Failed GC')},
+            { 
+                if(&(eq(count(negativeGrades),0),eq(count(deficiencyGrades),0)),
                 {
-                  $R->('Recurso')
-                }
-               ,{
-                   $R->('Reprovado')
+                        if(Helped,{$R->('Passed H')},{$R->('Passed')})
+              },
+             {
+                   if(&(eq(count(negativeGrades),0), lte(count(deficiencyGrades),2),
+                   !=> (deficiencyGrades,mostImportants,SubjectId)),
+                            {
+                              $R->('Recovery')
+                            }
+                           ,{
+                               $R->('Failed')
+                            })
                 })
-    })
-
-})
+            })
 ```
+###### Understanding Main Script
 
-# Sample Usage
-```csharp
-var  evaluator = new kiki.Evaluator<uspCarregarPautaFinalFGParaProcessamentoResult>();
-var message = evaluator.Run(Data, x => x.Nome,
-                     x => x.NumSequencia,
-                    (t1, t2) => t1.NumSequencia == t2.NumSequencia,
-                    x => x.MFD, x => x.IdDisciplina,
-                    x => x.Disciplina,
-                    x => x.Resultado, x => x.Observacao,
-                    mainScript,
-                    classes, subClass);
-```
-### 
+```if(lt(sumT(ContributionsOnGithub),1000)``` -> it is saying that if the **sum of all contributions** (```sumT(ContributionsOnGithub)```) of the candidate on github is less than (```lt```) 1000,
+then( ```{$R->('Failed GC')},```) this candidate is not approved.
+
+{$R->( )} -> assigns value to result field - can be of any type
+
+```if(&(eq(count(negativeGrades),0),eq(count(deficiencyGrades),0))``` -> is saying that if the number of negative grades (```count(negativeGrades)```) is equal (```eq```) to 0 and the number of deficient grades (```count(deficiencyGrades)```) is equal (```eq```) to 0.
+
+```!=> (deficiencyGrades,mostImportants,SubjectId))``` -> checking that the **deficiencyGrades** subset does not contain any of the items found in the **mostImportants** subset
+
+###### Understanding main script in a simple way
+
+In nested conditions the first condition is imperative so it appears first and the others inside it (The logic will depend on what you need). This was written to serve my purpose.
+
+what the script wants to tell us is that: if the candidate does not have contributions on github greater than 1000, then he is soon rejected by the company, as he does not meet this main requirement. if he has contributions greater than 1000 , then checks if the candidate has conditions to be admitted to the company imposing that he has no negative grades or grades considered as a deficiency, if he meets the condition, checks if the candidate was helped and assigns the result based on in the help he received, and if he does not meet this condition, then he checks if the candidate has the conditions to receive a new chance to retake the tests in which the grades are considered as deficiencies, imposing that the candidate does not have negative grades and that he has at most two deficiencies whose subjects are not among the most important ones. otherwise, the candidate is rejected.
+
+
+
