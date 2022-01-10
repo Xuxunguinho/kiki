@@ -41,12 +41,12 @@ jobs:
         run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
     
     
-      -  name: get_version 
+      -  name: pversion 
          uses: battila7/get-version-action@v2.2.1
        
     
       - name: Pack project
-        run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ steps.pversion.outputs.version }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
      
       - name: Push package
         run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_KEY }} -s ${{ env.NUGET_SOURCE_URL }}
