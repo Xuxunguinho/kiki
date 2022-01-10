@@ -69,6 +69,11 @@ For better understanding, below I will present practical examples and I will als
 ***Note***: *for the example, let's consider **a software development company that is hiring Developers**,
 these developers are evaluated based on some areas of knowledge such as: programming language skills, platform skills, and framework skills.*
 
+
+![2022-01-10_11-44-35](https://user-images.githubusercontent.com/74734491/148765514-37bdca4d-90c4-442b-a68c-5bf160d9c022.jpg)
+
+
+
 ### The generic object that we are going to use for the example
 ***Note***: *All **property fields** of our generic **object** can be used within our script to return their values... you can see this in the examples below*
 ``` csharp
@@ -151,7 +156,9 @@ then( ```{$R->('Failed GC')},```) this candidate is not approved.
 
 ```if(&(eq(count(negativeGrades),0),eq(count(deficiencyGrades),0))``` -> is saying that if the number of negative grades (```count(negativeGrades)```) is equal (```eq```) to 0 and the number of deficient grades (```count(deficiencyGrades)```) is equal (```eq```) to 0.
 
-```!=> (deficiencyGrades,mostImportants,SubjectId))``` -> checking that the **deficiencyGrades** subset does not contain any of the items found in the **mostImportants** subset
+```!=> (deficiencyGrades,mostImportants,SubjectId))``` -> checking that the **deficiencyGrades** subset does not contain any of the items found in the **mostImportants** subset. evaluating using field **SubjectId**
+
+
 
 ###### Understanding main script in a simple way
 
