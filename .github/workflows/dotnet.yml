@@ -1,0 +1,41 @@
+name: .NET
+
+on:
+ workflow_dispatch: 
+ 
+env:
+    PROJECT_PATH: 'kiki/kiki.csproj'
+    
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+  
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore -c Release -o out
+      
+    - name: 'Get version'
+      id: version
+      uses: battila7/get-version-action@v2
+      
+    - name: "create package"
+      run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build -c Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} -o out
+   
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    
+    - name: 'Package push'
+      run: |
+           cd out 
+           dotnet push *.nupkg -k ${{ secrets.GUITHUB_TOKEN }} -s "https://nuget.pkg.github.com/xuxunguinho/index.json" --skip-duplicate
