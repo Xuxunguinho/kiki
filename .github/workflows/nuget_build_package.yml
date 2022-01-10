@@ -48,5 +48,5 @@ jobs:
         run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg --skip-duplicate -k ${{ secrets.NUGET_AUTH_KEY }} -s ${{ env.NUGET_SOURCE_URL}}
      
       - name: 'Package push On github Packages'
-        run: dotnet push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.GUITHUB_TOKEN }} -s "https://nuget.pkg.github.com/xuxunguinho/index.json" --skip-duplicate
+        run: dotnet push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_KEY }} -s "https://nuget.pkg.github.com/xuxunguinho/index.json" --skip-duplicate
         
