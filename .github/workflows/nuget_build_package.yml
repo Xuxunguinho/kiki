@@ -43,8 +43,7 @@ jobs:
     
       -  name: get_version 
          uses: battila7/get-version-action@v2.2.1
-        
-      -  run: echo ${{ steps.get_version.outputs.version }}
+       
     
       - name: Pack project
         run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
