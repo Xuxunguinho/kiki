@@ -238,11 +238,11 @@ namespace kiki
 
                 ResultDescription = str.ToString();
 
-#if DEBUG
+
 
                 stow.Stop();
                 var message = $"The results were presented in -> {new TimeSpan(stow.ElapsedMilliseconds).Milliseconds}";
-#endif
+
                 message = "Success";
 
                 return message;
