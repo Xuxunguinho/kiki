@@ -686,22 +686,7 @@ namespace kiki
             }
         }
 
-        /// <summary>
-        /// Convert Any Object To Byte Array
-        /// </summary>
-        /// <param name="o"></param>
-        /// <returns></returns>
-        public static byte[] ToByteArray(this object o) //byte[] b = ToByteArray(Obj)
-        {
-            var ms = new MemoryStream();
-            var formatter = new BinaryFormatter();
-            formatter?.Serialize(ms, o);
-            var star = ms.ToArray();
-            ms.Dispose();
-            return star;
-        }
-        // ---------- Dictionary --------------
-
+     
         /// <summary>
         /// Return the key for the dictionary value or throws an exception if more than one value matches.
         /// </summary>
