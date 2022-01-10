@@ -12,6 +12,8 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main ] 
+    tags: 
+     -'v*'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -31,16 +33,21 @@ jobs:
       - name: Install dotnet
         uses: actions/setup-dotnet@v1
         with:
-              dotnet-version: '2.0'
+              dotnet-version: '5.0.x'
      
       - name: Restore packages
         run: dotnet restore ${{ env.PROJECT_PATH }}
      
-      - name: Restore build
+      - name: Build Project
         run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
     
+      - name: Get Version
+        id: version
+        uses: battila7/get-version-action@v2
+        
+    
       - name: Pack project
-        run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build  --configuration Release --include-symbols --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
      
       - name: Push package
         run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_KEY }} -s ${{ env.NUGET_SOURCE_URL }}
