@@ -44,6 +44,7 @@ namespace kiki
             _masterBinder["sumT"] = Summation;
             _masterBinder["or"] = Or;
             _masterBinder["&"] = And;
+            _masterBinder["%"] = Percent;
             // portuguese
             _masterBinder["ou"] = Or;
 
@@ -346,7 +347,7 @@ namespace kiki
                 (current, x) => (current.IsNullOrEmpty() ? current : current + ", ") +
                                 x.GetDynValue(basedKeyDisplayValue) + $"({(double) GetValueFromKey(key, x):#.0})");
 
-        
+
             return $"{str} ";
         }
 
@@ -357,7 +358,7 @@ namespace kiki
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
 
             var equate = args as IEnumerable<object>;
-            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+            var objects = equate as object[] ?? (equate).ToArray();
             //
             for (var i = 0; i < objects.Count(); i++)
                 if (i < objects.Count() - 1)
@@ -410,6 +411,50 @@ namespace kiki
                 soma = collection?.Sum(x => x.GetDynValue(field).ToString().ToDouble()) ?? 0;
                 return soma;
             }
+        };
+
+
+        private static Function<EvaluatorScriptCore<T>> Percent => (ctx, binder, args) =>
+        {
+            if (args.Count < 2 || args.Count > 2)
+                throw new LizzieException("o metodo não pode conter nem mais ou menos do que 2 argumentos");
+
+            // getting arguments
+            var arg1 = args[0];
+            var arg2 = args[1];
+            // getting context item
+            var item = binder["ctxI"].Cast<T>();
+        
+            // %(field,value) -> to get the percentage of certain value (value) base (field)
+            if (arg1 is string[] field && arg2.GetType().IsNumber())
+            {
+                var fieldValue = item.GetDynRuntimeValue(field);
+
+                if (!GetFieldTypeNew<T>(field).IsNumber())
+                    throw new LizzieException("O valor do campo tem de ser de tipo numerico");
+
+                return fieldValue * double.Parse(arg2.ToString() ?? string.Empty) / 100;
+            }
+
+            // %(value,field) -> to get the percentage value (value) of the base total value (field)
+            if (arg2 is string[] field2 && arg1.GetType().IsNumber())
+            {
+                var fieldValue = item.GetDynRuntimeValue(field2);
+
+                if (!GetFieldTypeNew<T>(field2).IsNumber())
+                    throw new LizzieException("O valor do campo tem de ser de tipo numerico");
+
+                if (fieldValue == 0)
+                    return 0;
+
+                return 100 * double.Parse(arg1.ToString() ?? string.Empty) / fieldValue;
+            }
+
+            var msg = new StringBuilder();
+            msg.AppendLine("A função em questao (%) so aceita os segintes formatos de declaração: ");
+            msg.AppendLine(" %(field,value) para obter a percentagem de determinado valor (value) base (field)");
+            msg.AppendLine(" %(value,field) para obter  o valor (value)  percentual  do valor total base (field)");
+            throw new LizzieException(msg.ToString());
         };
 
         #endregion
