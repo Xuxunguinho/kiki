@@ -13,13 +13,14 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using kiki.lizzie.exceptions;
 
 namespace kiki
 {
     public class Evaluator<T>
     {
         private Dictionary<string, string> _collectionClass;
-        private string _script;
+
         public readonly Dictionary<string, List<T>> ColletionsByClassifications = new Dictionary<string, List<T>>();
         private EvaluatorScriptCore<T> _evaluatorScriptCore;
         private readonly EventHandler<EvaluatorXTrigger<T>> _afterAvail;
@@ -27,15 +28,16 @@ namespace kiki
         public readonly List<string> Fields;
         public string ResultDescription { get; set; }
 
-        public virtual void OnAfterAvail(object sender, EvaluatorXTrigger<T> e)
+        protected virtual void OnAfterAvail(object sender, EvaluatorXTrigger<T> e)
         {
             // execute aqui o codigo depois  de avaliar 
         }
 
-        public virtual void OnBeforeAvail(object sender, EvaluatorXTrigger<T> e)
+        protected virtual void OnBeforeAvail(object sender, EvaluatorXTrigger<T> e)
         {
             // execute aqui o codigo para antes de avaliar
         }
+
 
         public Evaluator()
         {
@@ -60,6 +62,18 @@ namespace kiki
                     Fields.Add(x.Name);
                 }
             }
+        }
+        /// <summary>
+        /// add a variable and its value
+        /// </summary>
+        /// <param name="keyName">var Name</param>
+        /// <param name="value"> var value</param>
+        public void AddVar(string keyName, dynamic value)
+        {
+            if (Fields.Contains(keyName) || _evaluatorScriptCore.ExistsVar(keyName))
+                throw new KikiException("esta variável ja encontra declarada");
+            _evaluatorScriptCore.AddBind(keyName, value);
+            Fields.Add(keyName);
         }
 
         /// <summary>
@@ -88,7 +102,7 @@ namespace kiki
             try
             {
                 _collectionClass = collectionClass;
-                _script = script;
+
 
                 var stow = new Stopwatch();
                 stow.Start();
@@ -125,18 +139,18 @@ namespace kiki
                     _evaluatorScriptCore.SetValueForBind("$ctxI", ctxItem);
                     _evaluatorScriptCore.SetValueForBind("$ctxC", ctxCollection);
 
-                    _evaluatorScriptCore.Execute(_collectionClass, collectionSubclasses, _script);
-
+                    _evaluatorScriptCore.Execute(_collectionClass, collectionSubclasses, script);
 
                     // Make collections based on results
-                    if (ColletionsByClassifications.ContainsKey(ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty))
-                        ColletionsByClassifications[ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty].Add(ctxItem);
+                    if (ColletionsByClassifications.ContainsKey(ctxItem.GetDynValue(exprResult).ToString() ??
+                                                                string.Empty))
+                        ColletionsByClassifications[ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty]
+                            .Add(ctxItem);
                     else
                         ColletionsByClassifications.Add(ctxItem.GetDynValue(exprResult).ToString() ?? string.Empty,
                             new List<T> {ctxItem});
 
                     OnAfterAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
-                  
                 }
 
 
@@ -176,82 +190,44 @@ namespace kiki
             }
         }
 
-        public string Run(IEnumerable<T> source
-            , Expression<Func<T, object>> itemKey, Func<T, T,
-                bool> itemKeyDistinct,
-            string script, Dictionary<string, string> collectionClass,
-            Dictionary<string, string> collectionSubclasses = null)
+        /// <summary>
+        ///  simple script execution
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="script"></param>
+        /// <param name="collectionClass"></param>
+        /// <returns></returns>
+        /// <exception cref="LizzieException"></exception>
+        public KikiEvaluatorResultMessage Run(IEnumerable<T> source,
+            string script, Dictionary<string, string> collectionClass
+                = null)
         {
             try
             {
-                _collectionClass = collectionClass;
-                _script = script;
+                var ctxCollection = source as T[] ?? source.ToArray();
 
-                var stow = new Stopwatch();
-                stow.Start();
+                if (ctxCollection is null || ctxCollection?.Count() == 0)
+                    throw new LizzieException("a colecao nao pode ser nula");
 
-                // expressions
-                var enumerable1 = source as T[] ?? source.ToArray();
-                var scount = enumerable1?.Distinct(itemKey).Count();
+                _evaluatorScriptCore.SetValueForBind("$ctxC", ctxCollection.ToList());
 
-                _evaluatorScriptCore.SetValueForBind("$pkAll", itemKeyDistinct);
-                ColletionsByClassifications.Clear();
-                var enumerable = source as T[] ?? enumerable1.ToArray();
-
-                foreach (var s in enumerable.Distinct(itemKey))
+                foreach (var ctxItem in ctxCollection)
                 {
-                    var av = enumerable.Where(x => itemKeyDistinct(x, s))?.ToArray();
+                    OnBeforeAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
+                    _evaluatorScriptCore.SetValueForBind("$ctxI", ctxItem);
+                    _evaluatorScriptCore.Execute(collectionClass, null, script);
 
-                    OnBeforeAvail(this, new EvaluatorXTrigger<T>(s, av));
-
-                    _evaluatorScriptCore.SetValueForBind("$ctxI", s);
-                    _evaluatorScriptCore.SetValueForBind("$ctxC", av);
-
-                    // _evaluatorScriptCore.Execute(_collectionClass, collectionClass,  expreFieldForEvalKey, _script);
-
-                    var exprResult = _evaluatorScriptCore.GetBindValue("resultKey") as string[];
-
-                    // Make collections based on results
-                    if (ColletionsByClassifications.ContainsKey(s.GetDynValue(exprResult).ToString() ?? string.Empty))
-                        ColletionsByClassifications[s.GetDynValue(exprResult).ToString() ?? string.Empty].Add(s);
-                    else
-                        ColletionsByClassifications.Add(s.GetDynValue(exprResult).ToString() ?? string.Empty, new List<T> {s});
-
-                    OnAfterAvail(this, new EvaluatorXTrigger<T>(s, av));
-                    // helper.Run(_script);
+                    OnAfterAvail(this, new EvaluatorXTrigger<T>(ctxItem, ctxCollection));
                 }
-
-
-                var str = new StringBuilder();
-                str.AppendLine();
-                str.AppendLine("  Total");
-
-                foreach (var x in ColletionsByClassifications.Keys)
-                {
-                    var count = ColletionsByClassifications[x].Count;
-                    var percent = (count * 100) / (double) scount;
-
-                    str.AppendLine();
-                    str.AppendLine($"  {x}:{count} -> {percent:###.0} %");
-                }
-
-                ResultDescription = str.ToString();
-
-
-
-                stow.Stop();
-
-                const string message = "Success";
-
-                return message;
+                return new KikiEvaluatorResultMessage("Success", KikiEvaluatorMessageType.Success);
             }
             catch (TargetInvocationException e)
             {
-                return e.Message;
+                return new KikiEvaluatorResultMessage(e.Message, KikiEvaluatorMessageType.Error);
             }
             catch (Exception e)
             {
-                return e.Message;
+                return new KikiEvaluatorResultMessage(e.Message, KikiEvaluatorMessageType.Error);
             }
         }
     }

@@ -57,7 +57,7 @@ namespace kiki
             AddBind("ratingCollection", new Dictionary<string, List<T>> { });
             AddBind("subCollection", new Dictionary<string, List<T>> { });
             AddBind("$ctxI", CreateInstance<T>());
-            AddBind("$ctxC", new List<object>());
+            AddBind("$ctxC", new List<T>());
             AddBind("$pkAll", (Func<T, T, bool>) null);
         }
 
@@ -70,7 +70,10 @@ namespace kiki
         {
             _masterBinder[name] = value;
         }
-
+        public bool ExistsVar(string name)
+        {
+            return   _masterBinder.StaticItems?.Contains(name)?? false;
+        }
         /// <summary>
         /// assigns value to an existing Bind
         /// </summary>
@@ -96,48 +99,22 @@ namespace kiki
             var dictionary = new Dictionary<string, List<T>>();
             // clearing data already binded in lizzie
             SetValueForBind("ratingCollection", dictionary);
-
-
-            if (classes?.Keys == null)
-                throw new Exception("as classes de classificação não podem ser nulas ou vazias");
             var ctxC = _masterBinder["$ctxC"] as List<T>;
             var evalKey = _masterBinder["evalKey"] as string[];
+           
 
-
-            foreach (var key in classes?.Keys)
+            if (classes != null)
             {
-                var symbolName = key + "s";
-                var expr = classes[key].SupressSpace();
-                var exec = LambdaCompiler(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
-
-
-                var data = new List<T>();
-                if (ctxC != null)
-                    foreach (var x in ctxC)
-                    {
-                        _masterBinder["$ctxI"] = x;
-                        if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}) is bool
-                            condition)) continue;
-                        if (condition)
-                            data.Add(x);
-                    }
-
-                _masterBinder[symbolName] = data;
-                dictionary.Add(symbolName, data);
-            }
-
-            SetValueForBind("ratingCollection", dictionary);
-
-            var dictionary1 = new Dictionary<string, List<T>>();
-            // clearing data already binded in lizzie
-            SetValueForBind("subCollection", dictionary1);
-
-            if (subClasses?.Keys != null)
-                foreach (var key in subClasses?.Keys)
+                if (classes?.Keys == null)
+                    throw new Exception("as classes de classificação não podem ser nulas ou vazias");
+                
+                foreach (var key in classes?.Keys)
                 {
                     var symbolName = key + "s";
-                    var expr = subClasses[key].SupressSpace();
+                    var expr = classes[key].SupressSpace();
                     var exec = LambdaCompiler(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
+
+
                     var data = new List<T>();
                     if (ctxC != null)
                         foreach (var x in ctxC)
@@ -150,11 +127,41 @@ namespace kiki
                         }
 
                     _masterBinder[symbolName] = data;
-                    dictionary1.Add(symbolName, data);
+                    dictionary.Add(symbolName, data);
                 }
 
-            SetValueForBind("subCollection", dictionary1);
+                SetValueForBind("ratingCollection", dictionary);
+            }
+            if (subClasses != null)
+            {
+                
+                var dictionary1 = new Dictionary<string, List<T>>();
+                // clearing data already binded in lizzie
+                SetValueForBind("subCollection", dictionary1);
+                
+                if (subClasses?.Keys != null)
+                    foreach (var key in subClasses?.Keys)
+                    {
+                        var symbolName = key + "s";
+                        var expr = subClasses[key].SupressSpace();
+                        var exec = LambdaCompiler(expr) as lizzie.Function<EvaluatorScriptCore<T>>;
+                        var data = new List<T>();
+                        if (ctxC != null)
+                            foreach (var x in ctxC)
+                            {
+                                _masterBinder["$ctxI"] = x;
+                                if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}) is bool
+                                    condition)) continue;
+                                if (condition)
+                                    data.Add(x);
+                            }
 
+                        _masterBinder[symbolName] = data;
+                        dictionary1.Add(symbolName, data);
+                    }
+
+                SetValueForBind("subCollection", dictionary1);
+            }
             LambdaCompiler(script);
         }
 
