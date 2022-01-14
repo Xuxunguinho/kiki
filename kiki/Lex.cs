@@ -20,7 +20,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace kiki
-{ 
+{
     public static partial class Lex
     {
         // Type is...
@@ -137,9 +137,17 @@ namespace kiki
             return number;
         }
 
+        /// <summary>
+        /// returns the number of days from especific month form Context DateTime
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static int DaysInMonth(this DateTime date) => DateTime.DaysInMonth(date.Year, date.Month);
+
+
         public static int StrLength(this object obj)
         {
-            return obj.ToString().Length;
+            return obj?.ToString()?.Length ?? 0;
         }
 
         public static string ToShortTimeString(this TimeSpan time)
@@ -686,7 +694,7 @@ namespace kiki
             }
         }
 
-     
+
         /// <summary>
         /// Return the key for the dictionary value or throws an exception if more than one value matches.
         /// </summary>
@@ -810,6 +818,7 @@ namespace kiki
                 throw;
             }
         }
+
         public static PropertyDescriptorCollection DeserializeProperties(this Type item)
         {
             try
@@ -823,6 +832,7 @@ namespace kiki
                 throw;
             }
         }
+
         [Obsolete()]
         public static void Iif<T>(this T targetControl, Expression<Func<bool, bool, bool>> actionExpression)
         {
@@ -934,6 +944,7 @@ namespace kiki
 
             return finalvalue;
         }
+
         public static dynamic GetDynRuntimeValue<T>(this T item, IEnumerable<string> fields)
         {
             dynamic finalvalue = null;
@@ -964,44 +975,43 @@ namespace kiki
         /// <param name="desserializedExpessionfields"></param>
         /// <param name="class"></param>
         /// <returns></returns>
-        public static Type GetFieldType<T>( IEnumerable<string> desserializedExpessionfields)
+        public static Type GetFieldType<T>(IEnumerable<string> desserializedExpessionfields)
         {
-
-           var  @class =CreateInstance<T>();
+            var @class = CreateInstance<T>();
             Type fieldType = null;
             var enumerable = desserializedExpessionfields as string[] ?? desserializedExpessionfields.ToArray();
             var props = TypeDescriptor.GetProperties(typeof(T));
             object type;
             for (var i = 0; i < enumerable.Length; i++)
             {
-                type = props[enumerable[i]]?.GetValue(@class) ?? props[enumerable[i]]?.PropertyType; 
+                type = props[enumerable[i]]?.GetValue(@class) ?? props[enumerable[i]]?.PropertyType;
                 fieldType = props[enumerable[i]]?.GetValue(@class)?.GetType() ?? props[enumerable[i]]?.PropertyType;
                 if (i <= enumerable.Length - 1) continue;
                 props = TypeDescriptor.GetProperties(type);
                 fieldType = props[enumerable[i]]?.GetValue(@class)?.GetType() ?? props[enumerable[i]]?.PropertyType;
             }
+
             return fieldType;
         }
-        public static Type GetFieldTypeNew<T>( IEnumerable<string> desserializedExpessionfields)
-        {
 
-            
+        public static Type GetFieldTypeNew<T>(IEnumerable<string> desserializedExpessionfields)
+        {
             Type fieldType = null;
             var enumerable = desserializedExpessionfields.ToList();
             var props = TypeDescriptor.GetProperties(typeof(T));
             var temp = new List<string>();
             var count = enumerable.Count;
-            while ( fieldType is null  )
+            while (fieldType is null)
             {
-                for(var i = 0 ;i < count   ; i++)
+                for (var i = 0; i < count; i++)
                 {
                     var x = enumerable[i];
-                    
-                    var ss = props.Find(x,true);
-                  
+
+                    var ss = props.Find(x, true);
+
                     if (ss is null) return null;
-                    
-                    if (ss.GetChildProperties().Count > 0 &&  i <  enumerable.Count - 1)
+
+                    if (ss.GetChildProperties().Count > 0 && i < enumerable.Count - 1)
                         props = ss.GetChildProperties();
                     else
                     {
@@ -1009,10 +1019,10 @@ namespace kiki
                     }
                 }
             }
-            
+
             return fieldType;
         }
-    
+
         public static void SetDynValue<T>(this T item, object value, IEnumerable<string> fields)
         {
             try
@@ -1045,6 +1055,7 @@ namespace kiki
                 throw;
             }
         }
+
         public static bool CompareFromDynFieldsValue<T>(this T item, T item2, IEnumerable<string> fieldsMatch)
         {
             try

@@ -45,20 +45,21 @@ namespace kiki
             _masterBinder["or"] = Or;
             _masterBinder["&"] = And;
             _masterBinder["%"] = Percent;
+            _masterBinder["daysInMonth"] = DaysInMoth;
             // portuguese
             _masterBinder["ou"] = Or;
 
             //initializing new reserved fields for Lizzie
-            AddBind("$result", new string[] { });
-            AddBind("$obs", new string[] { });
-            AddBind("evalKeyDisplayValue", new string[] { });
-            AddBind("evalBasedKey", new string[] { });
-            AddBind("evalBasedKeyDisplayValue", new string[] { });
+            AddBind("$result", Array.Empty<string>());
+            AddBind("$obs", Array.Empty<string>());
+            AddBind("evalKeyDisplayValue", Array.Empty<string>());
+            AddBind("evalBasedKey", Array.Empty<string>());
+            AddBind("evalBasedKeyDisplayValue", Array.Empty<string>());
             AddBind("ratingCollection", new Dictionary<string, List<T>> { });
             AddBind("subCollection", new Dictionary<string, List<T>> { });
             AddBind("$ctxI", CreateInstance<T>());
             AddBind("$ctxC", new List<T>());
-            AddBind("$pkAll", (Func<T, T, bool>) null);
+            AddBind("$pkAll", null);
         }
 
         /// <summary>
@@ -70,10 +71,12 @@ namespace kiki
         {
             _masterBinder[name] = value;
         }
+
         public bool ExistsVar(string name)
         {
-            return   _masterBinder.StaticItems?.Contains(name)?? false;
+            return _masterBinder.StaticItems?.Contains(name) ?? false;
         }
+
         /// <summary>
         /// assigns value to an existing Bind
         /// </summary>
@@ -101,13 +104,13 @@ namespace kiki
             SetValueForBind("ratingCollection", dictionary);
             var ctxC = _masterBinder["$ctxC"] as List<T>;
             var evalKey = _masterBinder["evalKey"] as string[];
-           
+
 
             if (classes != null)
             {
                 if (classes?.Keys == null)
                     throw new Exception("as classes de classificação não podem ser nulas ou vazias");
-                
+
                 foreach (var key in classes?.Keys)
                 {
                     var symbolName = key + "s";
@@ -132,13 +135,13 @@ namespace kiki
 
                 SetValueForBind("ratingCollection", dictionary);
             }
+
             if (subClasses != null)
             {
-                
                 var dictionary1 = new Dictionary<string, List<T>>();
                 // clearing data already binded in lizzie
                 SetValueForBind("subCollection", dictionary1);
-                
+
                 if (subClasses?.Keys != null)
                     foreach (var key in subClasses?.Keys)
                     {
@@ -150,7 +153,8 @@ namespace kiki
                             foreach (var x in ctxC)
                             {
                                 _masterBinder["$ctxI"] = x;
-                                if (!(exec?.Invoke(this, _masterBinder, new Arguments {GetValueFromKey(evalKey, x)}) is bool
+                                if (!(exec?.Invoke(this, _masterBinder,
+                                        new Arguments {GetValueFromKey(evalKey, x)}) is bool
                                     condition)) continue;
                                 if (condition)
                                     data.Add(x);
@@ -162,6 +166,7 @@ namespace kiki
 
                 SetValueForBind("subCollection", dictionary1);
             }
+
             LambdaCompiler(script);
         }
 
@@ -299,47 +304,130 @@ namespace kiki
         {
             try
             {
-                if (args.Count > 1 || args.Count < 1)
-                    throw new Exception("Esta funcao nao pode ter mais nem menos do que 1 argumento");
-                if (!(args.Get(0) is string result))
-                    throw new Exception("o argumento tem de ser uma string");
-
+                // getting binded values
                 var contextCollection = binder["$ctxC"] as List<T>;
                 var storedData = binder["ratingCollection"] as Dictionary<string, List<T>>;
-
-                var contextItem = binder["$ctxI"].Cast<T>();
-                if (contextItem == null)
-                    throw new Exception("o item de contexto nao pode ser nulo");
-
                 var keyValue = binder["evalKey"] as string[];
                 var basedKeyDisplayValue = binder["evalBasedKeyDisplayValue"] as string[];
-
                 var exprObs = binder["$obs"] as string[];
                 var exprResult = binder["$result"] as string[];
                 var pkeyAll = binder["$pkAll"] as Func<T, T, bool>;
+                var contextItem = binder["$ctxI"].Cast<T>();
+                if (contextItem == null)
+                    throw new Exception("o item de contexto nao pode ser nulo");
+                //
                 var obs = new StringBuilder();
-
                 obs.Clear();
                 obs.AppendLine();
                 if (storedData != null)
                     foreach (var key in storedData.Keys)
                     {
                         var collection = storedData[key];
-                        var colet = StrBuilder(collection, keyValue, basedKeyDisplayValue);
-                        obs.AppendLine($"    {key} -> {collection.Count}");
-                        if (!colet.IsNullOrEmpty())
-                            obs.AppendLine($"    {colet}");
+                        if (keyValue?.Length > 0 && basedKeyDisplayValue?.Length > 0)
+                        {
+                            var colet = StrBuilder(collection, keyValue, basedKeyDisplayValue);
+                            obs.AppendLine($"    {key} -> {collection.Count}");
+                            if (!colet.IsNullOrEmpty())
+                                obs.AppendLine($"    {colet}");
+                        }
+
                         obs.AppendLine("");
                     }
 
                 obs.AppendLine();
-                contextCollection?.Update(p =>
-                {
-                    p.SetDynValue(obs.ToString(), exprObs);
-                    p.SetDynValue(result, exprResult);
-                }, n => pkeyAll != null && pkeyAll(n, contextItem));
+                // getting arguments
+                var arg1 = args[0];
 
-                return null;
+                switch (args.Count)
+                {
+                    case 1:
+                        //checking if the value assigned is a property field of type <T>, if yes,
+                        //then get the value of the field, if not, keep the original value assigned
+                        var value1 = arg1 is string[] strings
+                            ? contextItem.GetDynValue(strings)
+                            : arg1;
+                        // checking if the value to be assigned is of the same type as the property field to be set
+                        if (GetFieldTypeNew<T>(exprResult) != value1.GetType())
+                            throw new LizzieException(
+                                "O valor a ser atribuido tem de ser do mesmo tipo que o campo de propiedade escolhido como resultado");
+
+                        if (pkeyAll != null)
+                        {
+                            contextCollection?.Update(p =>
+                            {
+                                if (exprObs?.Length > 0)
+                                    p.SetDynValue(obs.ToString(), exprObs);
+
+                                p.SetDynValue(value1, exprResult);
+                            }, n => pkeyAll(n, contextItem));
+                        }
+                        else
+                        {
+                            contextItem.SetDynValue(value1, exprResult);
+                        }
+
+
+                        return typeof(void);
+                    case 2:
+                    {
+                        // getting 2th argument 
+                        var arg2 = args[1];
+                        // getting context item
+
+                        switch (arg1)
+                        {
+                            case string[] field1 when arg2 is string[] field2:
+                            {
+                                var fieldValue2 = contextItem.GetDynValue(field2);
+
+                                if (GetFieldTypeNew<T>(field1) != GetFieldTypeNew<T>(field2))
+                                    throw new LizzieException("O campo 1 tem de ser do mesmo tipo que o campo 2");
+                                if (pkeyAll != null)
+                                {
+                                    contextCollection?.Update(p =>
+                                    {
+                                        if (exprObs?.Length > 1)
+                                            p.SetDynValue(obs.ToString(), exprObs);
+                                        p.SetDynValue(fieldValue2, field1);
+                                    }, n => pkeyAll(n, contextItem));
+                                }
+                                else
+                                {
+                                    contextItem.SetDynValue(fieldValue2, field1);
+                                }
+
+                                break;
+                            }
+                            case string[] field when arg2.GetType() != typeof(string[]):
+                            {
+                                if (GetFieldTypeNew<T>(field) != arg2.GetType())
+                                    throw new LizzieException("O campo 1 tem de ser do mesmo tipo que o campo 2");
+
+                                if (pkeyAll != null)
+                                {
+                                    contextCollection?.Update(p =>
+                                    {
+                                        if (exprObs?.Length > 1)
+                                            p.SetDynValue(obs.ToString(), exprObs);
+                                        p.SetDynValue(arg2, field);
+                                    }, n => pkeyAll(n, contextItem));
+                                }
+                                else
+                                {
+                                    contextItem.SetDynValue(arg2, field);
+                                }
+
+                                break;
+                            }
+                            default:
+                                throw new LizzieException(
+                                    "O primeiro argumento tem de ser um campo das propriedades do Item");
+                        }
+                        return typeof(void);
+                    }
+                    default:
+                        throw new Exception("Esta funcao nao pode ter mais do que 2  argumentos");
+                }
             }
             catch (Exception e)
             {
@@ -431,7 +519,7 @@ namespace kiki
             var arg2 = args[1];
             // getting context item
             var item = binder["ctxI"].Cast<T>();
-        
+
             // %(field,value) -> to get the percentage of certain value (value) base (field)
             if (arg1 is string[] field && arg2.GetType().IsNumber())
             {
@@ -462,6 +550,20 @@ namespace kiki
             msg.AppendLine(" %(field,value) para obter a percentagem de determinado valor (value) base (field)");
             msg.AppendLine(" %(value,field) para obter  o valor (value)  percentual  do valor total base (field)");
             throw new LizzieException(msg.ToString());
+        };
+
+        private static Function<EvaluatorScriptCore<T>> DaysInMoth => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.DaysInMonth();
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
         };
 
         #endregion
