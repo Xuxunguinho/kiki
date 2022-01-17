@@ -621,7 +621,13 @@ namespace kiki.lizzie
             if (arguments.Count != 1)
                 throw new LizzieRuntimeException("The 'not' function must be given exactly 1 argument.");
             var arg = arguments.Get(0);
-            return arg == null ? (object) true : null;
+            
+            var value = arg is string[] strings
+                ? ((object)(binder["$ctxI"] as dynamic)).GetDynRuntimeValue(strings)
+                : arg;
+            
+            
+            return arg == null ? true : value == false;
         });
 
         /// <summary>

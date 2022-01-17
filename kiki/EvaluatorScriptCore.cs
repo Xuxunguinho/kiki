@@ -46,9 +46,9 @@ namespace kiki
             _masterBinder["&"] = And;
             _masterBinder["percent"] = Percent;
             _masterBinder["between"] = Between;
+            _masterBinder["isMonthOver"] = DateIsMonthOver;
             // bind DateTime Functions in English
             _masterBinder["$daysInMonth"] = GetDateTimeDaysInMoth;
-            _masterBinder["isMonthOver"] = DateIsMonthOver;
             _masterBinder["$year"] = GetDateTimeYear;
             _masterBinder["$day"] = GetDateTimeDay;
             _masterBinder["$month"] = GetDateTimeMonth;
@@ -60,6 +60,19 @@ namespace kiki
             _masterBinder["$years"] = GetDateTimeCountYearDiff;
             _masterBinder["$minutes"] = GetDateTimeCountMinuteDiff;
             _masterBinder["$seconds"] = GetDateTimeCountSecondsDiff;
+            // bind DateTime Functions in Portuguese
+            _masterBinder["$diasDoMes"] = GetDateTimeDaysInMoth;
+            _masterBinder["$ano"] = GetDateTimeYear;
+            _masterBinder["$dia"] = GetDateTimeDay;
+            _masterBinder["$mes"] = GetDateTimeMonth;
+            _masterBinder["$hora"] = GetDateTimeHour;
+            _masterBinder["$minuto"] = GetDateTimeMinute;
+            _masterBinder["$segundo"] = GetDateTimeSecond;
+            _masterBinder["$dias"] = GetDateTimeCountDaysDiff;
+            _masterBinder["$meses"] = GetDateTimeCountMonthDiff;
+            _masterBinder["$anos"] = GetDateTimeCountYearDiff;
+            _masterBinder["$minutos"] = GetDateTimeCountMinuteDiff;
+            _masterBinder["$segundos"] = GetDateTimeCountSecondsDiff;
             // portuguese
             _masterBinder["ou"] = Or;
             //initializing new reserved fields for Lizzie
@@ -75,7 +88,7 @@ namespace kiki
             AddBind("$ctxC", new List<T>());
             AddBind("$pkAll", null);
 
-            lizzie.LambdaCompiler.BindFunctions(_masterBinder);
+           lizzie.LambdaCompiler.BindFunctions(_masterBinder);
         }
 
         /// <summary>
@@ -648,9 +661,9 @@ namespace kiki
                 }
 
                 var msg = new StringBuilder();
-                msg.AppendLine("A função em questao (%) so aceita os segintes formatos de declaração: ");
-                msg.AppendLine(" %(field,value) para obter a percentagem de determinado valor (value) base (field)");
-                msg.AppendLine(" %(value,field) para obter  o valor (value)  percentual  do valor total base (field)");
+                msg.AppendLine("A função em questao (percent) so aceita os segintes formatos de declaração: ");
+                msg.AppendLine(" percent(field,value) para obter a percentagem de determinado valor (value) base (field)");
+                msg.AppendLine(" percent(value,field) para obter  o valor (value)  percentual  do valor total base (field)");
                 msg.AppendLine($"{DeserializeValue(args[1], binder)}");
                 msg.AppendLine($"{args[1].GetType()}");
                 throw new LizzieException(msg.ToString());
@@ -865,7 +878,7 @@ namespace kiki
             var arg1 = DeserializeValue(args[0], binder);
             var arg2 = DeserializeValue(args[1], binder);
 
-            if (arg1 is DateTime date1 && arg2 is DateTime date2)
+            if (arg1 is DateTime date1 && arg2 is DateTime   date2)
             {
                 return DateAndTime.DateDiff(DateInterval.Year, date1, date2);
             }

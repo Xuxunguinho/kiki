@@ -71,8 +71,10 @@ namespace kiki
 
         public static bool IsNumber(this Type t)
         {
-            return t == typeof(short) || t == typeof(int) || t == typeof(long) ||
-                   t == typeof(double) || t == typeof(decimal) || t == typeof(float);
+            return t == typeof(short) || t == typeof(short?) || t == typeof(int?) || t == typeof(int) ||
+                   t == typeof(long) || t == typeof(long?) ||
+                   t == typeof(double) || t == typeof(double?) || t == typeof(decimal) || t == typeof(decimal?) ||
+                   t == typeof(float) || t == typeof(float?);
         }
 
         public static float ToFloat(this object obj)
