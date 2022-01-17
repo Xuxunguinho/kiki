@@ -49,7 +49,9 @@ namespace kiki
             foreach (PropertyDescriptor x in fields)
             {
                 if (x.GetChildProperties()?.Count > 1)
-                {
+                {   
+                    _evaluatorScriptCore.AddBind(x.Name, new[] {x.Name});
+                    Fields.Add(x.Name);
                     foreach (PropertyDescriptor z in x.GetChildProperties())
                     {
                         _evaluatorScriptCore.AddBind($"{x.Name}_{z.Name}", new[] {x.Name, z.Name});
@@ -227,7 +229,7 @@ namespace kiki
             }
             catch (Exception e)
             {
-                return new KikiEvaluatorResultMessage(e.Message, KikiEvaluatorMessageType.Error);
+                return new KikiEvaluatorResultMessage(e.ToString(), KikiEvaluatorMessageType.Error);
             }
         }
     }

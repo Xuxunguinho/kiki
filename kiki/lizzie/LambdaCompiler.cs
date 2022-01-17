@@ -153,6 +153,7 @@ namespace kiki.lizzie
 
             // Math functions.
             binder["+"] = Functions<TContext>.Add;
+            binder["sum"] = Functions<TContext>.Add;
             binder["-"] = Functions<TContext>.Subtract;
             binder["*"] = Functions<TContext>.Multiply;
             binder["/"] = Functions<TContext>.Divide;
@@ -183,6 +184,11 @@ namespace kiki.lizzie
             binder["null"] = null;
             // Null is simply a constant yielding null. Portuguese
             binder["nulo"] = null;
+            binder["true"] = true;
+            binder["false"] = false;
+            
+            binder["verdadeira"] = true;
+            binder["falsa"] = false;
         }
 
         /// <summary>
