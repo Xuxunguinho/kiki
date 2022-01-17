@@ -76,7 +76,21 @@ namespace kiki
                    t == typeof(double) || t == typeof(double?) || t == typeof(decimal) || t == typeof(decimal?) ||
                    t == typeof(float) || t == typeof(float?);
         }
+        public static bool IsBoolean(this Type t)
+        {
+            return t == typeof(bool) || t == typeof(bool?);
 
+        }
+        public static bool IsDateTime(this Type t)
+        {
+            return t == typeof(DateTime) || t == typeof(DateTime?);
+
+        }
+        public static bool IsTimeSpan(this Type t)
+        {
+            return t == typeof(TimeSpan) || t == typeof(TimeSpan);
+
+        }
         public static float ToFloat(this object obj)
         {
             float.TryParse(obj?.ToString(), out var number);

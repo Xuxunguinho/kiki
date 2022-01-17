@@ -530,27 +530,44 @@ namespace kiki
         };
 
 
-        private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
+
+private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
 
             var equate = args as IEnumerable<object>;
             var objects = equate as object[] ?? (equate).ToArray();
+            var list = new List<bool>();
             //
-            for (var i = 0; i < objects.Length; i++)
-                if (i < objects.Length - 1)
-                    if (objects[i].GetType() != objects[i + 1].GetType())
-                        throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
+            foreach (var t in objects)
+            {
+                var item = DeserializeValue(t, binder);
+                if (!item.GetType().IsBoolean())
+                    throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
+                
+                list.Add(DeserializeValueDyn(t, binder));
+            }
 
-            return (args.Contains(true) && !args.Contains(false));
+            return (list.Contains(true) && !list.Contains(false));
         };
 
         private Function<EvaluatorScriptCore<T>> Or => (ctx, binder, args) =>
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
-            return args.Aggregate(false, (current, x) => current || (bool) x);
+            
+            var list = new List<bool>();
+            //
+            foreach (var t in args)
+            {
+                var item = DeserializeValue(t, binder);
+                if (!item.GetType().IsBoolean())
+                    throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
+                
+                list.Add(DeserializeValueDyn(t, binder));
+            }
+            return list.Aggregate(false, (current, x) => current || (bool) x);
         };
         private static Function<EvaluatorScriptCore<T>> DateIsMonthOver => (ctx, binder, args) =>
         {
@@ -658,6 +675,25 @@ namespace kiki
                         return 0;
 
                     return 100 * double.Parse(arg1.ToString() ?? string.Empty) / fieldValue;
+                }
+
+
+                if (arg1 is string[] field1 && arg2 is string[] field3)
+                {
+                    var baseValue = item.GetDynRuntimeValue(field1);
+                    var percentValue = item.GetDynRuntimeValue(field3);
+                    
+                    if (!GetFieldTypeNew<T>(field1).IsNumber())
+                        throw new LizzieException("O valor do campo 1 tem de ser de tipo numerico");
+                    
+                    if (!GetFieldTypeNew<T>(field3).IsNumber())
+                        throw new LizzieException("O valor do campo 2 tem de ser de tipo numerico");
+                    
+
+                    if (percentValue == 0)
+                        return 0;
+
+                    return double.Parse(percentValue.ToString() ?? string.Empty) * double.Parse(baseValue.ToString() ?? string.Empty) / 100;
                 }
 
                 var msg = new StringBuilder();
