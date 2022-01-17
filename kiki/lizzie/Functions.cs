@@ -153,8 +153,11 @@ namespace kiki.lizzie
             if (result is null)
                 Console.WriteLine("the argument return null value");
             else
-            {
-                Console.WriteLine(result.ToString());
+            { 
+                var value = result is string[] strings
+                    ? ((object)(binder["$ctxI"] as dynamic)).GetDynRuntimeValue(strings)
+                    : result;
+                Console.WriteLine(value.ToString());
             }
 
             // Returning the result of the operation to caller.

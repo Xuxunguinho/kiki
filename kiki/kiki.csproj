@@ -7,7 +7,7 @@
     <FileVersion>0.1.6</FileVersion>
     <AssemblyName>kiki</AssemblyName>
     <Product>kiki</Product>
-    <TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net45;net5.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -54,6 +54,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.0.1" />
+    <PackageReference Include="Microsoft.VisualBasic" Version="10.0.1" />
   </ItemGroup>
 
 </Project>

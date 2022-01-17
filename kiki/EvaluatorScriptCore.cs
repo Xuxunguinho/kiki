@@ -10,9 +10,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using kiki.lizzie;
+using kiki.lizzie.exceptions;
+using Microsoft.VisualBasic;
 using static kiki.Lex;
-using Arguments = kiki.lizzie.Arguments;
-using LizzieException = kiki.lizzie.exceptions.LizzieException;
 
 namespace kiki
 {
@@ -24,7 +24,7 @@ namespace kiki
     {
         private static Func<IEnumerable<string>, object, object> GetValueFromKey => (key, x) => x.GetDynValue(key);
         private readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
-
+        
         /// <summary>
         ///  class builder
         /// </summary>
@@ -32,8 +32,6 @@ namespace kiki
         {
             _masterBinder = new lizzie.Binder<EvaluatorScriptCore<T>>();
             lizzie.LambdaCompiler.BindFunctions(_masterBinder);
-
-
             //Extending Lizzie with new functions
             _masterBinder["$R->"] = ResultSetter;
             _masterBinder["!=>"] = NotContains;
@@ -45,16 +43,28 @@ namespace kiki
             _masterBinder["or"] = Or;
             _masterBinder["&"] = And;
             _masterBinder["%"] = Percent;
-            _masterBinder["daysInMonth"] = DaysInMoth;
+            // bind DateTime Functions in English
+            _masterBinder["$daysInMonth"] = GetDateTimeDaysInMoth;
+            _masterBinder["$year"] = GetDateTimeYear;
+            _masterBinder["$day"] = GetDateTimeDay;
+            _masterBinder["$month"] = GetDateTimeMonth;
+            _masterBinder["$hour"] = GetDateTimeHour;
+            _masterBinder["$minute"] = GetDateTimeMinute;
+            _masterBinder["$second"] = GetDateTimeSecond;
+            _masterBinder["$days"] = GetDateTimeCountDaysDiff;
+            _masterBinder["$months"] = GetDateTimeCountMonthDiff;
+            _masterBinder["$years"] = GetDateTimeCountYearDiff;
+            _masterBinder["$minutes"] = GetDateTimeCountMinuteDiff;
+            _masterBinder["$seconds"] = GetDateTimeCountSecondsDiff;
             // portuguese
             _masterBinder["ou"] = Or;
-
             //initializing new reserved fields for Lizzie
-            AddBind("$result", Array.Empty<string>());
-            AddBind("$obs", Array.Empty<string>());
-            AddBind("evalKeyDisplayValue", Array.Empty<string>());
-            AddBind("evalBasedKey", Array.Empty<string>());
-            AddBind("evalBasedKeyDisplayValue", Array.Empty<string>());
+            AddBind("$result", new string[]{});
+            AddBind("$obs", new string[]{});
+            AddBind("evalKey",new string[]{});
+            AddBind("evalKeyDisplayValue", new string[]{});
+            AddBind("evalBasedKey", new string[]{});
+            AddBind("evalBasedKeyDisplayValue", new string[]{});
             AddBind("ratingCollection", new Dictionary<string, List<T>> { });
             AddBind("subCollection", new Dictionary<string, List<T>> { });
             AddBind("$ctxI", CreateInstance<T>());
@@ -76,6 +86,21 @@ namespace kiki
         {
             return _masterBinder.StaticItems?.Contains(name) ?? false;
         }
+         
+        /// <summary>
+        /// checking if the value assigned is a property field of type <T>, if yes,
+        /// then get the value of the field, if not, keep the original value assigned
+        /// </summary>
+        /// <param name="arg1"></param>
+        /// <param name="binder"></param>
+        /// <returns></returns>
+        private static object DeserializeValue( object arg1,Binder<EvaluatorScriptCore<T>> binder)
+        {
+            var contextItem = binder["$ctxI"].Cast<T>();
+            var value = arg1 is string[] strings
+                ? contextItem.GetDynValue(strings) : arg1;
+            return value;
+        }
 
         /// <summary>
         /// assigns value to an existing Bind
@@ -87,9 +112,6 @@ namespace kiki
         {
             _masterBinder[name] = value;
         }
-
-
-        public object GetBindValue(string name) => _masterBinder[name];
 
         private object LambdaCompiler(string code)
         {
@@ -190,7 +212,7 @@ namespace kiki
             }
             else
             {
-                var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+                var objects = equate as object[] ?? (equate ?? new object[]{}).ToArray();
                 for (var i = 0; i < objects.Count(); i++)
                     if (i < objects.Count() - 1)
                         if (objects[i].GetType() != objects[i + 1].GetType())
@@ -255,7 +277,7 @@ namespace kiki
             else
             {
                 var equate = args.Get(1) as IEnumerable<object>;
-                var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+                var objects = equate as object[] ?? (equate ?? new object[]{}).ToArray();
                 if (objects.IsNullOrEmpty()) return true;
 
                 var field = args.Get(2) as string[];
@@ -348,7 +370,8 @@ namespace kiki
                             : arg1;
                         // checking if the value to be assigned is of the same type as the property field to be set
                         if (GetFieldTypeNew<T>(exprResult) != value1.GetType())
-                            throw new LizzieException(
+                            if(!(GetFieldTypeNew<T>(exprResult).IsNumber() && value1.GetType().IsNumber() )) 
+                              throw new LizzieException(
                                 "O valor a ser atribuido tem de ser do mesmo tipo que o campo de propiedade escolhido como resultado");
 
                         if (pkeyAll != null)
@@ -381,19 +404,20 @@ namespace kiki
                                 var fieldValue2 = contextItem.GetDynValue(field2);
 
                                 if (GetFieldTypeNew<T>(field1) != GetFieldTypeNew<T>(field2))
-                                    throw new LizzieException("O campo 1 tem de ser do mesmo tipo que o campo 2");
+                                    if(!(GetFieldTypeNew<T>(field1).IsNumber() && fieldValue2.GetType().IsNumber() )) 
+                                        throw new LizzieException("O campo 1 tem de ser do mesmo tipo que o campo 2");
                                 if (pkeyAll != null)
                                 {
                                     contextCollection?.Update(p =>
                                     {
                                         if (exprObs?.Length > 1)
                                             p.SetDynValue(obs.ToString(), exprObs);
-                                        p.SetDynValue(fieldValue2, field1);
+                                        p.SetDynValue(Convert.ChangeType(fieldValue2, GetFieldTypeNew<T>(field1)), field1);
                                     }, n => pkeyAll(n, contextItem));
                                 }
                                 else
                                 {
-                                    contextItem.SetDynValue(fieldValue2, field1);
+                                    contextItem.SetDynValue(Convert.ChangeType(fieldValue2, GetFieldTypeNew<T>(field1)), field1);
                                 }
 
                                 break;
@@ -401,20 +425,22 @@ namespace kiki
                             case string[] field when arg2.GetType() != typeof(string[]):
                             {
                                 if (GetFieldTypeNew<T>(field) != arg2.GetType())
-                                    throw new LizzieException("O campo 1 tem de ser do mesmo tipo que o campo 2");
+                                    if(!(GetFieldTypeNew<T>(field).IsNumber() && arg2.GetType().IsNumber() )) 
+                                        throw new LizzieException("O campo 1 tem de ser do mesmo tipo que o campo 2");
 
                                 if (pkeyAll != null)
-                                {
+                                { 
+                                   
                                     contextCollection?.Update(p =>
                                     {
                                         if (exprObs?.Length > 1)
                                             p.SetDynValue(obs.ToString(), exprObs);
-                                        p.SetDynValue(arg2, field);
+                                        p.SetDynValue(Convert.ChangeType(arg2, GetFieldTypeNew<T>(field)), field);
                                     }, n => pkeyAll(n, contextItem));
                                 }
                                 else
-                                {
-                                    contextItem.SetDynValue(arg2, field);
+                                { 
+                                     contextItem.SetDynValue(Convert.ChangeType(arg2, GetFieldTypeNew<T>(field)), field);
                                 }
 
                                 break;
@@ -423,6 +449,7 @@ namespace kiki
                                 throw new LizzieException(
                                     "O primeiro argumento tem de ser um campo das propriedades do Item");
                         }
+
                         return typeof(void);
                     }
                     default:
@@ -431,16 +458,17 @@ namespace kiki
             }
             catch (Exception e)
             {
-                throw new Exception(e.Message);
+                throw new LizzieException(e.ToString());
             }
         };
 
         private static string StrBuilder(IEnumerable<T> collection, IEnumerable<string> key,
             IEnumerable<string> basedKeyDisplayValue)
         {
-            var str = collection.Aggregate(string.Empty,
+            var str = 
+                collection.Aggregate(string.Empty,
                 (current, x) => (current.IsNullOrEmpty() ? current : current + ", ") +
-                                x.GetDynValue(basedKeyDisplayValue) + $"({(double) GetValueFromKey(key, x):#.0})");
+                                x.GetDynRuntimeValue(basedKeyDisplayValue) + $"({x.GetDynRuntimeValue(key):#.0})");
 
 
             return $"{str} ";
@@ -473,7 +501,7 @@ namespace kiki
         private Function<EvaluatorScriptCore<T>> Summation => (ctx, binder, args) =>
         {
             var equate = args as IEnumerable<object>;
-            var objects = equate as object[] ?? (equate ?? Array.Empty<object>()).ToArray();
+            var objects = equate as object[] ?? (equate ?? new object[]{}).ToArray();
             if (args.Count == 1)
             {
                 var arg1 = objects[0];
@@ -511,48 +539,58 @@ namespace kiki
 
         private static Function<EvaluatorScriptCore<T>> Percent => (ctx, binder, args) =>
         {
-            if (args.Count < 2 || args.Count > 2)
-                throw new LizzieException("o metodo não pode conter nem mais ou menos do que 2 argumentos");
-
-            // getting arguments
-            var arg1 = args[0];
-            var arg2 = args[1];
-            // getting context item
-            var item = binder["ctxI"].Cast<T>();
-
-            // %(field,value) -> to get the percentage of certain value (value) base (field)
-            if (arg1 is string[] field && arg2.GetType().IsNumber())
+            try
             {
-                var fieldValue = item.GetDynRuntimeValue(field);
+                if (args.Count < 2 || args.Count > 2)
+                    throw new LizzieException("o metodo não pode conter nem mais ou menos do que 2 argumentos");
 
-                if (!GetFieldTypeNew<T>(field).IsNumber())
-                    throw new LizzieException("O valor do campo tem de ser de tipo numerico");
+                // getting arguments
+                var arg1 = args[0];
+                var arg2 = args[1];
+                // getting context item
+                var item = binder["$ctxI"].Cast<T>();
+         
+                // %(field,value) -> to get the percentage of certain value (value) base (field)
+                if (arg1 is string[] field && arg2.GetType().IsNumber())
+                {
+                    var fieldValue = item.GetDynRuntimeValue(field);
 
-                return fieldValue * double.Parse(arg2.ToString() ?? string.Empty) / 100;
+                    if (!GetFieldTypeNew<T>(field).IsNumber())
+                        throw new LizzieException("O valor do campo tem de ser de tipo numerico");
+
+                    return double.Parse(fieldValue.ToString()) * double.Parse(arg2.ToString() ?? string.Empty) / 100;
+                }
+
+                // %(value,field) -> to get the percentage value (value) of the base total value (field)
+                if (arg2 is string[] field2 && arg1.GetType().IsNumber())
+                {
+                    var fieldValue = item.GetDynRuntimeValue(field2);
+
+                    if (!GetFieldTypeNew<T>(field2).IsNumber())
+                        throw new LizzieException("O valor do campo tem de ser de tipo numerico");
+
+                    if (fieldValue == 0)
+                        return 0;
+
+                    return 100 * double.Parse(arg1.ToString() ?? string.Empty) / fieldValue;
+                }
+
+                var msg = new StringBuilder();
+                msg.AppendLine("A função em questao (%) so aceita os segintes formatos de declaração: ");
+                msg.AppendLine(" %(field,value) para obter a percentagem de determinado valor (value) base (field)");
+                msg.AppendLine(" %(value,field) para obter  o valor (value)  percentual  do valor total base (field)");
+                throw new LizzieException(msg.ToString());
             }
-
-            // %(value,field) -> to get the percentage value (value) of the base total value (field)
-            if (arg2 is string[] field2 && arg1.GetType().IsNumber())
+            catch (Exception e)
             {
-                var fieldValue = item.GetDynRuntimeValue(field2);
-
-                if (!GetFieldTypeNew<T>(field2).IsNumber())
-                    throw new LizzieException("O valor do campo tem de ser de tipo numerico");
-
-                if (fieldValue == 0)
-                    return 0;
-
-                return 100 * double.Parse(arg1.ToString() ?? string.Empty) / fieldValue;
+            
+                throw new KikiException(e.Message);
             }
-
-            var msg = new StringBuilder();
-            msg.AppendLine("A função em questao (%) so aceita os segintes formatos de declaração: ");
-            msg.AppendLine(" %(field,value) para obter a percentagem de determinado valor (value) base (field)");
-            msg.AppendLine(" %(value,field) para obter  o valor (value)  percentual  do valor total base (field)");
-            throw new LizzieException(msg.ToString());
         };
 
-        private static Function<EvaluatorScriptCore<T>> DaysInMoth => (ctx, binder, args) =>
+        #region DateAndTime
+
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeDaysInMoth => (ctx, binder, args) =>
         {
             if (args.Count > 1 | args.Count < 1)
                 throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
@@ -565,6 +603,171 @@ namespace kiki
 
             throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
         };
+
+        
+        
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeDay => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.Day;
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeYear => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.Year;
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeMonth => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.Month;
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeHour => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.Hour;
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeMinute => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.Minute;
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeSecond => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.Second;
+            }
+
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeDayOfWeek => (ctx, binder, args) =>
+        {
+            if (args.Count > 1 | args.Count < 1)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 1  argumento");
+            // getting arguments
+            var arg1 = args[0];
+            if (arg1 is DateTime date)
+            {
+                return date.DayOfWeek;
+            }
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeCountDaysDiff=> (ctx, binder, args) =>
+        {
+            if (args.Count < 2 | args.Count > 2)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 2  argumentos");
+            // getting arguments
+            var arg1 =   DeserializeValue(args[0],binder);
+            var arg2 = DeserializeValue( args[1],binder);
+            
+            if (arg1 is DateTime date1 && arg2 is DateTime date2)
+            {
+                return DateAndTime.DateDiff(DateInterval.Day,date1,date2);
+            }
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeCountMonthDiff=> (ctx, binder, args) =>
+        {
+            if (args.Count < 2 | args.Count > 2)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 2  argumentos");
+            // getting arguments
+            var arg1 =   DeserializeValue(args[0],binder);
+            var arg2 = DeserializeValue( args[1],binder);
+            
+            if (arg1 is DateTime date1 && arg2 is DateTime date2)
+            {
+                return Microsoft.VisualBasic.DateAndTime.DateDiff(DateInterval.Month,date1,date2);
+            }
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeCountMinuteDiff=> (ctx, binder, args) =>
+        {
+            if (args.Count < 2 | args.Count > 2)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 2  argumentos");
+            // getting arguments
+            var arg1 =   DeserializeValue(args[0],binder);
+            var arg2 = DeserializeValue( args[1],binder);
+            
+            if (arg1 is DateTime date1 && arg2 is DateTime date2)
+            {
+                return DateAndTime.DateDiff(DateInterval.Minute,date1,date2);
+            }
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeCountSecondsDiff=> (ctx, binder, args) =>
+        {
+            if (args.Count < 2 | args.Count > 2)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 2  argumentos");
+            // getting arguments
+            var arg1 =   DeserializeValue(args[0],binder);
+            var arg2 = DeserializeValue( args[1],binder);
+            
+            if (arg1 is DateTime date1 && arg2 is DateTime date2)
+            {
+                return DateAndTime.DateDiff(DateInterval.Second,date1,date2);
+            }
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        private static Function<EvaluatorScriptCore<T>> GetDateTimeCountYearDiff=> (ctx, binder, args) =>
+        {
+            if (args.Count < 2 | args.Count > 2)
+                throw new LizzieException("o metodo não pode contais  mais nem menos do que 2  argumentos");
+            // getting arguments
+            var arg1 =   DeserializeValue(args[0],binder);
+            var arg2 = DeserializeValue( args[1],binder);
+            
+            if (arg1 is DateTime date1 && arg2 is DateTime date2)
+            {
+                return DateAndTime.DateDiff(DateInterval.Year,date1,date2);
+            }
+            throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+        };
+        #endregion
 
         #endregion
     }
