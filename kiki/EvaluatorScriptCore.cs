@@ -38,14 +38,17 @@ namespace kiki
             _masterBinder["=>"] = Contains;
             // portuguese
             _masterBinder["somaT"] = Summation;
+            _masterBinder["entre"] = Between;
+            _masterBinder["mesTerminou"] = DateIsMonthOver;
             // english
             _masterBinder["sumT"] = Summation;
             _masterBinder["or"] = Or;
             _masterBinder["&"] = And;
             _masterBinder["percent"] = Percent;
+            _masterBinder["between"] = Between;
             // bind DateTime Functions in English
             _masterBinder["$daysInMonth"] = GetDateTimeDaysInMoth;
-            _masterBinder["$isMonthOver"] = DateIsMonthOver;
+            _masterBinder["isMonthOver"] = DateIsMonthOver;
             _masterBinder["$year"] = GetDateTimeYear;
             _masterBinder["$day"] = GetDateTimeDay;
             _masterBinder["$month"] = GetDateTimeMonth;
@@ -102,6 +105,14 @@ namespace kiki
             var contextItem = binder["$ctxI"].Cast<T>();
             var value = arg1 is string[] strings
                 ? contextItem.GetDynValue(strings)
+                : arg1;
+            return value;
+        }
+
+        private static dynamic DeserializeValueDyn(object arg1, Binder<EvaluatorScriptCore<T>> binder)
+        {
+            var value = arg1 is string[] strings
+                ? ((object) (binder["$ctxI"] as dynamic)).GetDynRuntimeValue(strings)
                 : arg1;
             return value;
         }
@@ -488,6 +499,24 @@ namespace kiki
         }
 
 
+        #region Bolean
+
+        private static Function<EvaluatorScriptCore<T>> Between => (ctx, binder, args) =>
+        {
+            if (args.Count < 3)
+                throw new LizzieException("o metodo não pode conter menos do que 3 argumentos");
+            if (args[0] is string[] field)
+            {
+                var baseValue = DeserializeValueDyn(field, binder);
+                var compareValue1 = DeserializeValueDyn(args[1], binder);
+                var compareValue2 = DeserializeValueDyn(args[1], binder);
+
+                return baseValue > compareValue1 && baseValue < compareValue2;
+            }
+            throw new LizzieException(" o primeiro parametro do metodo tem de ser campo de propriedade");
+        };
+
+
         private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
         {
             if (args.Count < 2)
@@ -496,8 +525,8 @@ namespace kiki
             var equate = args as IEnumerable<object>;
             var objects = equate as object[] ?? (equate).ToArray();
             //
-            for (var i = 0; i < objects.Count(); i++)
-                if (i < objects.Count() - 1)
+            for (var i = 0; i < objects.Length; i++)
+                if (i < objects.Length - 1)
                     if (objects[i].GetType() != objects[i + 1].GetType())
                         throw new LizzieException("os paramentros da lista de compracao devem ser do mesmo tipo");
 
@@ -510,6 +539,36 @@ namespace kiki
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
             return args.Aggregate(false, (current, x) => current || (bool) x);
         };
+        private static Function<EvaluatorScriptCore<T>> DateIsMonthOver => (ctx, binder, args) =>
+        {
+            var arg1 = DeserializeValue(args[0], binder);
+
+            switch (args.Count)
+            {
+                case 1:
+                    if (arg1 is DateTime date1)
+                    {
+                        var day = date1.DaysInMonth();
+                        var comp = new DateTime(date1.Year, date1.Month, day);
+                        return DateTime.Now.Date > comp.Date;
+                    }
+
+                    throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+                case 2:
+                    var arg2 = DeserializeValue(args[1], binder);
+                    if (arg1 is DateTime date && arg2 is DateTime date2)
+                    {
+                        var day = date.DaysInMonth();
+                        var comp = new DateTime(date.Year, date.Month, day);
+                        return date2.Date > comp.Date;
+                    }
+
+                    throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
+                default:
+                    throw new LizzieException("o metodo não pode conter  nenos do que 1 nem mais do que 2  argumentos");
+            }
+        };
+        #endregion
 
         private Function<EvaluatorScriptCore<T>> Summation => (ctx, binder, args) =>
         {
@@ -814,33 +873,7 @@ namespace kiki
             throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
         };
 
-        private static Function<EvaluatorScriptCore<T>> DateIsMonthOver => (ctx, binder, args) =>
-        {
-            var arg1 = DeserializeValue(args[0], binder);
-
-            switch (args.Count)
-            {
-                case 1:
-                    if (arg1 is DateTime date1)
-                    {
-                        var day = date1.DaysInMonth();
-                        var comp = new DateTime(date1.Year, date1.Month, day);
-                        return DateTime.Now.Date > comp.Date;
-                    }
-                    throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
-                case 2:
-                    var arg2 = DeserializeValue(args[1], binder);
-                    if (arg1 is DateTime date && arg2 is DateTime date2)
-                    {
-                        var day = date.DaysInMonth();
-                        var comp = new DateTime(date.Year, date.Month, day);
-                        return date2.Date > comp.Date;
-                    }
-                    throw new KikiException("Esta função so aceita paramentros do tipo DateTime");
-                default:
-                    throw new LizzieException("o metodo não pode conter  nenos do que 1 nem mais do que 2  argumentos");
-            }
-        };
+     
 
         #endregion
 
