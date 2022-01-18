@@ -518,15 +518,14 @@ namespace kiki
         {
             if (args.Count < 3)
                 throw new LizzieException("o metodo não pode conter menos do que 3 argumentos");
-            if (args[0] is string[] field)
-            {
-                var baseValue = DeserializeValueDyn(field, binder);
+            
+                var baseValue = DeserializeValueDyn(args[0], binder);
                 var compareValue1 = DeserializeValueDyn(args[1], binder);
-                var compareValue2 = DeserializeValueDyn(args[1], binder);
-
+                var compareValue2 = DeserializeValueDyn(args[2], binder);
+                if (baseValue is null) return false;
                 return baseValue > compareValue1 && baseValue < compareValue2;
-            }
-            throw new LizzieException(" o primeiro parametro do metodo tem de ser campo de propriedade");
+            
+          
         };
 
 
@@ -552,7 +551,7 @@ private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
             return (list.Contains(true) && !list.Contains(false));
         };
 
-        private Function<EvaluatorScriptCore<T>> Or => (ctx, binder, args) =>
+        private static Function<EvaluatorScriptCore<T>> Or => (ctx, binder, args) =>
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
