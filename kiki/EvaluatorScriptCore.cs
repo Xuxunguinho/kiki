@@ -40,6 +40,7 @@ namespace kiki
             _masterBinder["somaT"] = Summation;
             _masterBinder["entre"] = Between;
             _masterBinder["mesTerminou"] = DateIsMonthOver;
+         
             // english
             _masterBinder["sumT"] = Summation;
             _masterBinder["or"] = Or;
@@ -424,8 +425,6 @@ namespace kiki
                         {
                             contextItem.SetDynValue(value1, exprResult);
                         }
-
-
                         return typeof(void);
                     case 2:
                     {
