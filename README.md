@@ -18,6 +18,9 @@ IDE: [Jetbrains Rider](https://www.jetbrains.com/rider/)
 <img src="https://user-images.githubusercontent.com/74734491/148679922-a0d46288-8d51-4748-bb33-96ee759eb7ef.jpg" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679862-8607cc11-3fb7-46eb-8ae0-8be1729406a3.jpg" width="100" height="50" />  <img src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" alt="" data-canonical-src="https://user-images.githubusercontent.com/74734491/148679100-3059af09-27af-464e-ac47-f10d91279f57.png" width="50" height="50" /> 
 
 # Small documentation
+
+Demo Project: [Demo](https://github.com/Xuxunguinho/kiki_demo)
+
 basics of how kiki works
 ### kiki's main method
 it is possible that new overloads of this method appear while we are updating and improving the project, after all, the objective is to create a library that can be able to perform data evaluations in different ways.
@@ -126,6 +129,7 @@ The expression ```{lt(TestGrade, 8)}``` represents the condition similar to the 
         };
 ```
 ### Main Script
+
 It is in the main script where we write all the evaluation rule
 
 ``` csharp
