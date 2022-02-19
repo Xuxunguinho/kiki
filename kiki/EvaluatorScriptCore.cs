@@ -24,10 +24,6 @@ namespace kiki
     {
         private static Func<IEnumerable<string>, object, object> GetValueFromKey => (key, x) => x.GetDynValue(key);
         private readonly lizzie.Binder<EvaluatorScriptCore<T>> _masterBinder;
-
-        /// <summary>
-        ///  class builder
-        /// </summary>
         public EvaluatorScriptCore()
         {
             _masterBinder = new lizzie.Binder<EvaluatorScriptCore<T>>();
@@ -196,27 +192,26 @@ namespace kiki
                     // clearing data already binded in lizzie
                     SetValueForBind("subCollection", dictionary1);
 
-                    if (subClasses?.Keys != null)
-                        foreach (var key in subClasses?.Keys)
-                        {
-                            var symbolName = key + "s";
-                            var expr = subClasses[key].SupressSpace();
-                            var exec = LambdaCompiler(expr) as Function<EvaluatorScriptCore<T>>;
-                            var data = new List<T>();
-                            if (ctxC != null)
-                                foreach (var x in ctxC)
-                                {
-                                    _masterBinder["$ctxI"] = x;
-                                    if (!(exec?.Invoke(this, _masterBinder,
-                                            new Arguments {GetValueFromKey(evalKey, x)}) is bool
-                                        condition)) continue;
-                                    if (condition)
-                                        data.Add(x);
-                                }
+                    foreach (var key in subClasses?.Keys)
+                    {
+                        var symbolName = key + "s";
+                        var expr = subClasses[key].SupressSpace();
+                        var exec = LambdaCompiler(expr) as Function<EvaluatorScriptCore<T>>;
+                        var data = new List<T>();
+                        if (ctxC != null)
+                            foreach (var x in ctxC)
+                            {
+                                _masterBinder["$ctxI"] = x;
+                                if (!(exec?.Invoke(this, _masterBinder,
+                                        new Arguments {GetValueFromKey(evalKey, x)}) is bool
+                                    condition)) continue;
+                                if (condition)
+                                    data.Add(x);
+                            }
 
-                            _masterBinder[symbolName] = data;
-                            dictionary1.Add(symbolName, data);
-                        }
+                        _masterBinder[symbolName] = data;
+                        dictionary1.Add(symbolName, data);
+                    }
 
                     SetValueForBind("subCollection", dictionary1);
                 }
@@ -277,15 +272,7 @@ namespace kiki
             }
         };
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="binder"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        /// <exception cref="LizzieException"></exception>
-
-        public Function<EvaluatorScriptCore<T>> NotContains => (ctx, binder, args) =>
+        private Function<EvaluatorScriptCore<T>> NotContains => (ctx, binder, args) =>
         {
             if (args.IsNullOrEmpty()) return true;
             if (args.Count != 3)
@@ -522,14 +509,13 @@ namespace kiki
                 var compareValue1 = DeserializeValueDyn(args[1], binder);
                 var compareValue2 = DeserializeValueDyn(args[2], binder);
                 if (baseValue is null) return false;
-                return baseValue > compareValue1 && baseValue < compareValue2;
-            
+                return baseValue > compareValue1 && baseValue < compareValue2;            
           
         };
 
 
 
-private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
+       private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
         {
             if (args.Count < 2)
                 throw new LizzieException("o metodo não pode conter menos do que 2 argumentos");
@@ -627,7 +613,7 @@ private static Function<EvaluatorScriptCore<T>> And => (ctx, binder, args) =>
                 double soma = 0;
                 if (!(arg1 is List<T> collection))
                     throw new LizzieException(
-                        "O primeiro argumento da função[  somaT(list,campo) ] tem de ser um conjunto de elementos!");
+                        "O primeiro argumento da função [  somaT(list,campo) ] tem de ser um conjunto de elementos!");
                 if (!(arg2 is string[] field))
                     throw new LizzieException(
                         "O segundo argumento da função [  somaT(list,campo) ] tem de ser um campo da conjunto!");
