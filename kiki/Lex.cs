@@ -2280,7 +2280,12 @@ namespace kiki
 
             return ret;
         }
-
+        public static string Normalized(this string src)
+        {
+            if (src.IsNullOrEmpty()) return string.Empty;
+            return string.Concat(src.Normalize(NormalizationForm.FormD)
+                .Where(ch=> CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark));
+        }
         public static string NullAsEmptyString(this string src)
         {
             var ret = src ?? string.Empty;
