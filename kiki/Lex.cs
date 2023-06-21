@@ -586,6 +586,15 @@ namespace kiki
 
             return number;
         }
+        /// <summary>
+        /// Normalize text 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string NormalizedText(this string text )=>  new string (text
+        .Normalize(System.Text.NormalizationForm.FormD)
+        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+        .ToArray());
 
         public static float ParseFloat(this double obj)
         {
